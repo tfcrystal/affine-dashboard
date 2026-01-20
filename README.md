@@ -1,7 +1,7 @@
 # Dominated Web - Model Dominance Rankings
 
 A Next.js web application to display Bittensor Affine model rankings with dominance analysis.
-
+This project should work on affine-cortex repo from affine(SN120) of bittensor
 ## Features
 
 - Fetches latest rank data using `af get-rank` command
