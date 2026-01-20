@@ -26,13 +26,70 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Get the latest date folder name from existing folders
+ */
+async function getLatestDateFolder(): Promise<string | null> {
+  try {
+    const entries = await readdir(REPORTS_DIR, { withFileTypes: true });
+    const dateFolders = entries
+      .filter(e => e.isDirectory() && /^\d{8}$/.test(e.name))
+      .map(e => e.name)
+      .sort()
+      .reverse();
+    return dateFolders.length > 0 ? dateFolders[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Load the latest successful report to get all UIDs
  */
 async function loadLatestSuccessfulReport(): Promise<string | null> {
   try {
+    // First, try to find reports in date folders
+    const latestDateFolder = await getLatestDateFolder();
+    if (latestDateFolder) {
+      const dateFolderPath = path.join(REPORTS_DIR, latestDateFolder);
+      const files = await readdir(dateFolderPath);
+      const candidates = files
+        .filter(f => f.endsWith('.txt'))
+        .map(f => path.join(dateFolderPath, f));
+
+      const withStat = await Promise.all(
+        candidates.map(async p => {
+          try {
+            const s = await stat(p);
+            return { p, mtimeMs: s.mtimeMs, size: s.size };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      const sorted = withStat
+        .filter((x): x is { p: string; mtimeMs: number; size: number } => !!x && x.size > 50)
+        .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+      for (const c of sorted) {
+        try {
+          const content = await readFile(c.p, 'utf-8');
+          // Check if it looks like a success report
+          const head = content.slice(0, 500);
+          if (!head.startsWith('Error:') && !head.includes('Forbidden') && 
+              head.includes('MINER RANKING TABLE') && head.includes('Hotkey')) {
+            return content;
+          }
+        } catch {
+          continue;
+        }
+      }
+    }
+
+    // Fallback: check root reports directory for old files (backward compatibility)
     const files = await readdir(REPORTS_DIR);
     const candidates = files
-      .filter(f => f.endsWith('.txt'))
+      .filter(f => f.endsWith('.txt') && !f.includes('/'))
       .map(f => path.join(REPORTS_DIR, f));
 
     const withStat = await Promise.all(

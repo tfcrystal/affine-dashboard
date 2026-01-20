@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { readFile, readdir, stat } from 'fs/promises';
+import { readFile, readdir, stat, mkdir } from 'fs/promises';
 import { parseRankData, calculateDominance } from '../../utils/parseRankData';
 import { getModelSizesFromCache, setModelSizesInCache } from '../../utils/modelSizeCache';
 import path from 'path';
@@ -52,11 +52,81 @@ function looksLikeSuccessReport(content: string): boolean {
   return head.includes('MINER RANKING TABLE') && head.includes('Hotkey') && head.includes('|');
 }
 
+/**
+ * Get date folder name in YYYYMMDD format from JST timezone
+ */
+function getDateFolderName(): string {
+  const nowDate = new Date();
+  const utc = nowDate.getTime() + (nowDate.getTimezoneOffset() * 60000);
+  const jstDate = new Date(utc + (9 * 60 * 60 * 1000));
+  const day = String(jstDate.getDate()).padStart(2, '0');
+  const month = String(jstDate.getMonth() + 1).padStart(2, '0');
+  const year = jstDate.getFullYear();
+  return `${year}${month}${day}`;
+}
+
+/**
+ * Get the latest date folder name from existing folders
+ */
+async function getLatestDateFolder(): Promise<string | null> {
+  try {
+    const entries = await readdir(REPORTS_DIR, { withFileTypes: true });
+    const dateFolders = entries
+      .filter(e => e.isDirectory() && /^\d{8}$/.test(e.name))
+      .map(e => e.name)
+      .sort()
+      .reverse();
+    return dateFolders.length > 0 ? dateFolders[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Load the latest successful report from date folders
+ */
 async function loadLatestSuccessfulReport(): Promise<{ reportPath: string; content: string } | null> {
   try {
+    // First, try to find reports in date folders
+    const latestDateFolder = await getLatestDateFolder();
+    if (latestDateFolder) {
+      const dateFolderPath = path.join(REPORTS_DIR, latestDateFolder);
+      const files = await readdir(dateFolderPath);
+      const candidates = files
+        .filter(f => f.endsWith('.txt'))
+        .map(f => path.join(dateFolderPath, f));
+
+      const withStat = await Promise.all(
+        candidates.map(async p => {
+          try {
+            const s = await stat(p);
+            return { p, mtimeMs: s.mtimeMs, size: s.size };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      const sorted = withStat
+        .filter((x): x is { p: string; mtimeMs: number; size: number } => !!x && x.size > 50)
+        .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+      for (const c of sorted) {
+        try {
+          const content = await readFile(c.p, 'utf-8');
+          if (looksLikeSuccessReport(content)) {
+            return { reportPath: c.p, content };
+          }
+        } catch {
+          continue;
+        }
+      }
+    }
+
+    // Fallback: check root reports directory for old files (backward compatibility)
     const files = await readdir(REPORTS_DIR);
     const candidates = files
-      .filter(f => f.endsWith('.txt'))
+      .filter(f => f.endsWith('.txt') && !f.includes('/'))
       .map(f => path.join(REPORTS_DIR, f));
 
     const withStat = await Promise.all(
@@ -104,7 +174,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // try to recover currentBlock from the cached report file name.
     if (cachedCurrentBlock === undefined && cachedTimestamp) {
       try {
-        const p = path.join(REPORTS_DIR, `${cachedTimestamp}.txt`);
+        // Try to find the report in date folders first
+        const dateFolder = cachedTimestamp.substring(0, 8); // Extract YYYYMMDD from timestamp
+        const dateFolderPath = path.join(REPORTS_DIR, dateFolder);
+        let p = path.join(dateFolderPath, `${cachedTimestamp}.txt`);
+        try {
+          await stat(p);
+        } catch {
+          // Fallback to root directory for old files
+          p = path.join(REPORTS_DIR, `${cachedTimestamp}.txt`);
+        }
         const c = await readFile(p, 'utf-8');
         const parsed = parseRankData(c);
         cachedCurrentBlock = parsed.currentBlock;
@@ -229,7 +308,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const hours = String(jstDate.getHours()).padStart(2, '0');
     const minutes = String(jstDate.getMinutes()).padStart(2, '0');
     const timestamp = `${year}${month}${day}-${hours}:${minutes}`;
-    const reportPath = path.join(REPORTS_DIR, `${timestamp}.txt`);
+    
+    // Create date folder and save report there
+    const dateFolder = getDateFolderName();
+    const dateFolderPath = path.join(REPORTS_DIR, dateFolder);
+    await mkdir(dateFolderPath, { recursive: true });
+    const reportPath = path.join(dateFolderPath, `${timestamp}.txt`);
 
     // Execute af get-rank command
     // Change to the affine directory first, then run the command
