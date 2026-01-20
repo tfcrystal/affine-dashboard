@@ -1,0 +1,29 @@
+{
+  "name": "dominated-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon",
+    "build": "next build",
+    "start": "next start -p ${PORT:-3568}",
+    "lint": "next lint",
+    "update-model-sizes": "tsx scripts/update-model-sizes.ts",
+    "schedule-model-sizes": "tsx scripts/schedule-model-size-updates.ts"
+  },
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
+    "nodemon": "^3.1.11",
+    "tsx": "^4.7.0",
+    "typescript": "^5.0.0"
+  }
+}

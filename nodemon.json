@@ -1,0 +1,26 @@
+{
+  "watch": [
+    "pages",
+    "components",
+    "lib",
+    "public",
+    "styles",
+    "*.js",
+    "*.ts",
+    "*.json"
+  ],
+  "ext": "ts,tsx,js,jsx,json",
+  "ignore": [
+    "node_modules",
+    ".next",
+    "out",
+    "build",
+    "dist",
+    "*.log"
+  ],
+  "exec": "next dev -p 3568",
+  "env": {
+    "NODE_ENV": "development",
+    "PORT": "3568"
+  }
+}

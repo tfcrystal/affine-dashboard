@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UID Dominance Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 16px;
+            font-size: 32px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-connected {
+            background: #10b981;
+        }
+
+        .status-disconnected {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 120px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+        
+        /* Prevent table from expanding beyond container */
+        #dominanceTable {
+            table-layout: auto;
+        }
+        
+        #modalBody table {
+            table-layout: auto;
+        }
+
+        thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+
+        th {
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            border-bottom: 2px solid #e5e7eb;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        th.sortable:hover {
+            background: #f0f0f0;
+        }
+
+        th.sortable::after {
+            content: ' ↕';
+            opacity: 0.5;
+            font-size: 12px;
+        }
+
+        th.sort-asc::after {
+            content: ' ↑';
+            opacity: 1;
+        }
+
+        th.sort-desc::after {
+            content: ' ↓';
+            opacity: 1;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        td.pareto-frontier {
+            background: #fef3c7 !important; /* Yellow background for Pareto frontier score cells */
+        }
+
+        td.pareto-frontier:hover {
+            background: #fde68a !important; /* Slightly darker yellow on hover */
+        }
+        
+        .clicked-uid-row {
+            background-color: #b18f07 !important; /* Bright blue background */
+            color: white;
+        }
+        .clicked-uid-row td {
+            color: white;
+        }
+        .clicked-uid-row a {
+            color: #dbeafe !important; /* Light blue for links */
+        }
+        .clicked-uid-row a:hover {
+            color: white !important;
+        }
+        .ineligible-uid-row {
+            background-color: #e5e7eb !important; /* Grey background for ineligible UIDs */
+        }
+        .ineligible-uid-row:hover {
+            background-color: #d1d5db !important; /* Slightly darker grey on hover */
+        }
+        
+        /* Clickable UID cells */
+        .uid-cell {
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+        
+        .uid-cell:hover {
+            color: #667eea !important;
+            text-decoration: underline;
+        }
+        
+        .model-name {
+            width: 80px;
+            max-width: 80px;
+            min-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left !important;
+        }
+        
+        /* Ensure Model Name column (2nd column) has fixed width */
+        table th:nth-child(2),
+        table td:nth-child(2) {
+            width: 80px;
+            max-width: 80px;
+            min-width: 60px;
+        }
+        
+        /* For modal tables */
+        #modalBody table th:nth-child(2),
+        #modalBody table td:nth-child(2) {
+            width: 80px;
+            max-width: 80px;
+            min-width: 60px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-pareto {
+            background: #10b981;
+            color: white;
+        }
+
+        .badge-dominated {
+            background: #ef4444;
+            color: white;
+        }
+
+        .badge-no-data {
+            background: #6b7280;
+            color: white;
+        }
+
+        .dominating-list {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dominating-list:hover {
+            white-space: normal;
+            word-break: break-all;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .search-box {
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .hotkey {
+            font-family: monospace;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .age {
+            color: #0055ff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .first-block {
+            color: #ff0000;
+            font-size: 12px;
+            font-weight: normal;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .clickable {
+            cursor: pointer;
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        .clickable:hover {
+            color: #5568d3;
+        }
+
+        .env-scores {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .points {
+            font-weight: 600;
+            color: #0021b4;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 24px;
+            border-radius: 12px;
+            width: 95%;
+            max-width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-content table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .modal-content thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+        
+        .modal-content th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #667eea;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .modal-content td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .modal-content tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .modal-content tr.pareto-frontier {
+            background: #fef3c7 !important;
+        }
+        
+        .modal-content tr.pareto-frontier:hover {
+            background: #fde68a !important;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+        
+        #dominanceModal {
+            display: none !important;
+        }
+        
+        #dominanceModal.show {
+            display: block !important;
+        }
+        
+        #modalBody {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        #modalBody table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        #modalBody th {
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            border-bottom: 2px solid #e5e7eb;
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+        
+        #modalBody td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+        }
+        
+        #modalBody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .eligible-badge {
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+
+        .ineligible-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>UID Dominance Dashboard</h1>
+            <div>
+                <span class="status-indicator status-connected" id="statusIndicator"></span>
+                <span id="statusText">Ready</span>
+                <span id="blockInfo" style="margin-left: 20px; color: #6b7280;"></span>
+            </div>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalUids">-</div>
+                    <div class="stat-label">Total UIDs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="paretoCount">-</div>
+                    <div class="stat-label">On Pareto Frontier</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="dominatedCount">-</div>
+                    <div class="stat-label">Dominated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="noDataCount">-</div>
+                    <div class="stat-label" title="UIDs with no evaluation data in any environment">No Data</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button onclick="refreshDataWithCalculation()">Refresh & Calculate</button>
+                <button onclick="toggleAutoRefresh()" id="autoRefreshBtn">Auto-Refresh: ON</button>
+                <label>
+                    Block: <input type="number" id="blockInput" placeholder="Latest">
+                </label>
+                <button onclick="loadBlockData()">Load Block</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by UID or hotkey..." oninput="filterTable()">
+            </div>
+            <div id="errorContainer"></div>
+            <div id="loading" class="loading">Loading dominance data...</div>
+            <table id="dominanceTable" style="display: none;">
+                <thead>
+                    <tr id="tableHeader">
+                        <th>UID</th>
+                        <th>Dominating<br></th>
+                        <!-- Environment columns will be added dynamically -->
+                        <th class="sortable" onclick="sortTable('age')" data-column="age">Age (days)</th>
+                        <th class="sortable" onclick="sortTable('points')" data-column="points">Points (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for Dominance Details -->
+    <div id="dominanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Dominance Details</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let detailViewData = null; // Cache for detail view data: { clickedUid, dominatingUids, allData, envNames, envNameMap, envFrontierUppers }
+        let dominanceDetailCache = {}; // Cache for all dominance detail data: { uid: { dominating_uids, ... } }
+        let autoRefresh = true;
+        let refreshInterval = null;
+        let sortColumn = null;
+        let sortDirection = 'asc';
+        let envNames = [];
+        let envNameMap = {}; // Maps clean names to original names
+
+        function cleanEnvName(envName) {
+            // Remove prefixes like "agentgym:", "affine:", or nested patterns
+            let cleaned = envName;
+            // Remove nested "agentgym:(agentgym:" patterns first
+            cleaned = cleaned.replace(/^agentgym:\(agentgym:/, '');
+            // Remove "agentgym:" prefix
+            cleaned = cleaned.replace(/^agentgym:/, '');
+            // Remove "affine:" prefix
+            cleaned = cleaned.replace(/^affine:/, '');
+            // Remove "agentgym:(" pattern
+            cleaned = cleaned.replace(/^agentgym:\(/, '');
+            // Remove trailing closing paren if it exists
+            cleaned = cleaned.replace(/\)$/, '');
+            return cleaned.trim();
+        }
+
+        function updateStatus(connected) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            if (connected) {
+                indicator.className = 'status-indicator status-connected';
+                statusText.textContent = 'Connected';
+            } else {
+                indicator.className = 'status-indicator status-disconnected';
+                statusText.textContent = 'Disconnected';
+            }
+        }
+
+        function updateUI(data) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dominanceTable').style.display = 'table';
+            
+            // Update stats
+            document.getElementById('totalUids').textContent = data.total_uids;
+            // Count scored UIDs (UIDs with data)
+            const scoredUidsCount = data.uids.filter(u => u.has_data).length;
+            document.getElementById('paretoCount').textContent = scoredUidsCount;
+            document.getElementById('dominatedCount').textContent = data.dominated_count;
+            // Count no data UIDs but don't show them
+            const noDataCount = data.uids.filter(u => !u.has_data).length;
+            document.getElementById('noDataCount').textContent = noDataCount;
+            
+            // Update block info
+            document.getElementById('blockInfo').textContent = `Block: ${data.block}`;
+            
+            // Get environment names from first UID with data
+            const firstUidWithData = data.uids.find(u => u.has_data && u.env_scores);
+            if (firstUidWithData) {
+                const originalEnvNames = Object.keys(firstUidWithData.env_scores || {});
+                // Create mapping between clean names and original names
+                envNameMap = {};
+                envNames = originalEnvNames.map(originalName => {
+                    const cleanName = cleanEnvName(originalName);
+                    envNameMap[cleanName] = originalName;
+                    return cleanName;
+                });
+            }
+            
+            // Update table header with environment columns (using clean names for display)
+            const headerRow = document.getElementById('tableHeader');
+            const envHeaders = envNames.map(cleanEnv => {
+                const originalEnv = envNameMap[cleanEnv];
+                return `<th class="sortable" onclick="sortTable('env_${originalEnv}')" data-column="env_${originalEnv}">${cleanEnv}</th>`;
+            }).join('');
+            headerRow.innerHTML = `
+                <th>UID</th>
+                <th>Model Name</th>
+                <th class="sortable" onclick="sortTable('dominated_by')" data-column="dominated_by">Dominating<br></th>
+                ${envHeaders}
+                <th class="sortable" onclick="sortTable('average')" data-column="average">AVE</th>
+                <th class="sortable" onclick="sortTable('age')" data-column="age">Age (days)</th>
+                <th class="sortable" onclick="sortTable('points')" data-column="points">Points (%)</th>
+                
+            `;
+            
+            // Update table
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            // Filter and sort UIDs
+            let sortedUids = [...data.uids]
+                .filter(u => u.has_data);  // Only show UIDs with data
+            
+            // Check if we have any data to display
+            if (sortedUids.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px;">No data available. This could mean:<br>1. No miners have submitted data yet<br>2. The API is not returning data<br>3. Check server logs for errors</td></tr>';
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dominanceTable').style.display = 'table';
+                return;
+            }
+            
+            // Apply sorting
+            if (sortColumn) {
+                sortedUids.sort((a, b) => {
+                    let aVal, bVal;
+                    if (sortColumn === 'points') {
+                        aVal = a.points || 0;
+                        bVal = b.points || 0;
+                    } else if (sortColumn === 'age') {
+                        aVal = a.age_days || 0;
+                        bVal = b.age_days || 0;
+                    } else if (sortColumn === 'dominated_by') {
+                        // Sort by total number of dominating UIDs
+                        aVal = a.dominated_by_count || 0;
+                        bVal = b.dominated_by_count || 0;
+                    } else if (sortColumn === 'average') {
+                        // Calculate average of all environment scores
+                        let aTotal = 0, aCount = 0, bTotal = 0, bCount = 0;
+                        if (a.env_scores) {
+                            Object.values(a.env_scores).forEach(score => {
+                                if (score > 0) {
+                                    aTotal += score;
+                                    aCount++;
+                                }
+                            });
+                        }
+                        if (b.env_scores) {
+                            Object.values(b.env_scores).forEach(score => {
+                                if (score > 0) {
+                                    bTotal += score;
+                                    bCount++;
+                                }
+                            });
+                        }
+                        aVal = aCount > 0 ? aTotal / aCount : 0;
+                        bVal = bCount > 0 ? bTotal / bCount : 0;
+                    } else if (sortColumn.startsWith('env_')) {
+                        const originalEnv = sortColumn.replace('env_', '');
+                        aVal = (a.env_scores && a.env_scores[originalEnv]) || 0;
+                        bVal = (b.env_scores && b.env_scores[originalEnv]) || 0;
+                    } else {
+                        return 0;
+                    }
+                    
+                    if (sortDirection === 'asc') {
+                        return aVal - bVal;
+                    } else {
+                        return bVal - aVal;
+                    }
+                });
+            } else {
+                // Default sort: by points (descending)
+                sortedUids.sort((a, b) => {
+                    const aPoints = a.points || 0;
+                    const bPoints = b.points || 0;
+                    return bPoints - aPoints;
+                });
+            }
+            
+            // Calculate which environment scores are on the frontier
+            // For each environment, find the highest upper bound of confidence intervals
+            // ONLY among UIDs that are on the Pareto frontier (not dominated)
+            const envFrontierUppers = {};
+            envNames.forEach(cleanEnv => {
+                const originalEnv = envNameMap[cleanEnv];
+                let maxUpper = 0;
+                sortedUids.forEach(u => {
+                    // Only consider UIDs on the Pareto frontier (not dominated by anyone)
+                    if (u.on_pareto_frontier && u.has_data) {
+                        const ci = (u.env_confidence_intervals && u.env_confidence_intervals[originalEnv]) || [0.0, 0.0];
+                        const upper = (ci[1] || 0) * 100;
+                        if (upper > maxUpper) {
+                            maxUpper = upper;
+                        }
+                    }
+                });
+                envFrontierUppers[originalEnv] = maxUpper;
+            });
+            
+            sortedUids.forEach(uidStatus => {
+                const row = document.createElement('tr');
+                
+                // Add grey background for non-active UIDs
+                if (!uidStatus.is_active) {
+                    row.className = 'ineligible-uid-row';
+                }
+                
+                // Dominated by cell with active/non-active counts - format as "total/active"
+                let dominatedByHtml = '0';
+                if (uidStatus.dominated_by_count > 0) {
+                    const activeCount = uidStatus.dominating_active_count || 0;
+                    dominatedByHtml = `
+                        <a href="#" onclick="showDetailView(${uidStatus.uid}); return false;" class="clickable" title="Click to see details">
+                            ${uidStatus.dominated_by_count}
+                        </a>
+                    `;
+                }
+                
+                // Model name
+                const modelName = uidStatus.model_name || 'N/A';
+                const modelNameDisplay = modelName !== 'N/A' 
+                    ? `<a href="https://huggingface.co/${modelName.split('@')[0]}" target="_blank" style="color: #667eea; text-decoration: none;" class="model-name" title="${modelName}">${modelName}</a>`
+                    : `<span style="color: #6b7280;" class="model-name" title="UID ${uidStatus.uid}">UID ${uidStatus.uid}</span>`;
+                
+                // Build environment score cells (using original names for lookup, clean names for display)
+                // Show average score and confidence interval ranges
+                // Highlight cells only if:
+                // 1. This UID is on the Pareto frontier (not dominated)
+                // 2. This score is at the frontier for that environment (among Pareto frontier UIDs)
+                const envCells = envNames.map(cleanEnv => {
+                    const originalEnv = envNameMap[cleanEnv];
+                    const avgScore = ((uidStatus.env_scores && uidStatus.env_scores[originalEnv]) || 0) * 100;
+                    const threshold = ((uidStatus.env_thresholds && uidStatus.env_thresholds[originalEnv]) || 0) * 100;
+                    const received = (uidStatus.env_sample_counts && uidStatus.env_sample_counts[originalEnv]) || 0;
+                    const total = (uidStatus.env_total_problems && uidStatus.env_total_problems[originalEnv]) || 0;
+                    const completenessColor = total > 0 && received >= total * 0.95 ? 'green' : 'red';
+                    // Check if this score is on the frontier for this environment
+                    // Only highlight if UID is on Pareto frontier AND score matches frontier
+                    const ci = (uidStatus.env_confidence_intervals && uidStatus.env_confidence_intervals[originalEnv]) || [0.0, 0.0];
+                    const upper = (ci[1] || 0) * 100;
+                    const maxUpper = envFrontierUppers[originalEnv] || 0;
+                    const isFrontierScore = uidStatus.on_pareto_frontier && uidStatus.has_data && 
+                                          Math.abs(upper - maxUpper) < 0.1; // Within 0.1 of the max
+                    const paretoClass = isFrontierScore ? 'pareto-frontier' : '';
+                    return `<td data-value="${avgScore}" class="${paretoClass}">${avgScore.toFixed(1)}[${threshold.toFixed(1)}]<br><span style="font-size: 0.7em; color: ${completenessColor};">(${received}/${total})</span></td>`;
+                }).join('');
+                
+                // Calculate total average of all environment scores
+                let totalAvg = 0;
+                let envCount = 0;
+                envNames.forEach(cleanEnv => {
+                    const originalEnv = envNameMap[cleanEnv];
+                    const score = (uidStatus.env_scores && uidStatus.env_scores[originalEnv]) || 0;
+                    if (score > 0) {
+                        totalAvg += score;
+                        envCount++;
+                    }
+                });
+                const overallAvg = envCount > 0 ? (totalAvg / envCount) * 100 : 0;
+                
+                // Points cell: highlight if on overall Pareto frontier
+                const pointsParetoClass = uidStatus.on_pareto_frontier ? 'pareto-frontier' : '';
+                
+                row.innerHTML = `
+                    <td><strong class="uid-cell" onclick="copyUidToClipboard(${uidStatus.uid}, event)" title="Click to copy UID">${uidStatus.uid}</strong></td>
+                    <td class="model-name" style="text-align: left;">${modelNameDisplay}</td>
+                    <td>${dominatedByHtml}</td>
+                    ${envCells}
+                    <td data-value="${overallAvg}" class="sortable"><span>${overallAvg.toFixed(1)}</span></td>
+                    <td data-value="${uidStatus.age_days || 0}">
+                        <span class="age">${uidStatus.age_days.toFixed(2)}</span>
+                        ${uidStatus.first_block ? `<span class="first-block">${uidStatus.first_block.toLocaleString()}</span>` : ''}
+                    </td>
+                    <td data-value="${uidStatus.points || 0}" class="${pointsParetoClass}"><span class="Points(%)">${((uidStatus.points || 0) * 100).toFixed(2)}</span></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Update sort indicators
+            updateSortIndicators();
+            
+            // Apply current filter
+            filterTable();
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                // Toggle direction
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            // Re-render table if we have data
+            if (currentViewUid !== null && detailViewData) {
+                // If we're on a detail view, just re-render with cached data (no API call - fast!)
+                renderDetailViewFromCache();
+            } else if (currentViewUid !== null) {
+                // If we don't have cached data, fetch it
+                showDetailView(currentViewUid);
+            } else if (currentData) {
+                // Otherwise, update the main UI
+                updateUI(currentData);
+            }
+        }
+
+        function updateSortIndicators() {
+            // Remove all sort classes
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            // Add sort class to current column
+            if (sortColumn) {
+                const header = document.querySelector(`th[data-column="${sortColumn}"]`);
+                if (header) {
+                    header.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            }
+        }
+        
+        // Fast rendering function that uses cached data (no API calls)
+        function renderDetailViewFromCache() {
+            if (!detailViewData) return;
+            
+            const { clickedUid, dominatingUids, envNames, envNameMap, envFrontierUppers } = detailViewData;
+            const uid = currentViewUid;
+            
+            // Sort dominating UIDs based on current sort settings
+            let sortedDomUids = [...dominatingUids];
+            
+            // Apply sorting if sortColumn is set
+            if (sortColumn) {
+                sortedDomUids.sort((a, b) => {
+                    let aVal, bVal;
+                    if (sortColumn === 'points') {
+                        aVal = a.points || 0;
+                        bVal = b.points || 0;
+                    } else if (sortColumn === 'age') {
+                        aVal = a.age_days || 0;
+                        bVal = b.age_days || 0;
+                    } else if (sortColumn === 'dominated_by') {
+                        aVal = a.dominated_by_count || 0;
+                        bVal = b.dominated_by_count || 0;
+                    } else if (sortColumn === 'average') {
+                        // Calculate average of all environment scores
+                        let aTotal = 0, aCount = 0, bTotal = 0, bCount = 0;
+                        if (a.env_scores) {
+                            Object.values(a.env_scores).forEach(score => {
+                                if (score > 0) {
+                                    aTotal += score;
+                                    aCount++;
+                                }
+                            });
+                        }
+                        if (b.env_scores) {
+                            Object.values(b.env_scores).forEach(score => {
+                                if (score > 0) {
+                                    bTotal += score;
+                                    bCount++;
+                                }
+                            });
+                        }
+                        aVal = aCount > 0 ? aTotal / aCount : 0;
+                        bVal = bCount > 0 ? bTotal / bCount : 0;
+                    } else if (sortColumn.startsWith('env_')) {
+                        const originalEnv = sortColumn.replace('env_', '');
+                        aVal = (a.env_scores && a.env_scores[originalEnv]) || 0;
+                        bVal = (b.env_scores && b.env_scores[originalEnv]) || 0;
+                    } else {
+                        return 0;
+                    }
+                    
+                    if (sortDirection === 'asc') {
+                        return aVal - bVal;
+                    } else {
+                        return bVal - aVal;
+                    }
+                });
+            } else {
+                // Default sort: by points (descending)
+                sortedDomUids.sort((a, b) => {
+                    const aPoints = a.points || 0;
+                    const bPoints = b.points || 0;
+                    return bPoints - aPoints;
+                });
+            }
+            
+            // Build table rows
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            // First, add the clicked UID's row
+            if (clickedUid) {
+                const clickedRow = document.createElement('tr');
+                if (!clickedUid.is_active) {
+                    clickedRow.className = 'ineligible-uid-row';
+                } else {
+                    clickedRow.className = 'clicked-uid-row';
+                }
+                
+                let clickedDominatedByHtml = '0';
+                if (clickedUid.dominated_by_count > 0) {
+                    const activeCount = clickedUid.dominating_active_count || 0;
+                    clickedDominatedByHtml = `
+                        <a href="#" onclick="showDetailView(${clickedUid.uid}); return false;" class="clickable" title="Click to see details">
+                            ${clickedUid.dominated_by_count}
+                        </a>
+                    `;
+                }
+                
+                const clickedModelName = clickedUid.model_name || 'N/A';
+                const clickedModelNameDisplay = clickedModelName !== 'N/A' 
+                    ? `<a href="https://huggingface.co/${clickedModelName.split('@')[0]}" target="_blank" style="color: #dbeafe; text-decoration: none;" class="model-name" title="${clickedModelName}">${clickedModelName}</a>`
+                    : `<span style="color: white;" class="model-name" title="UID ${clickedUid.uid}">UID ${clickedUid.uid}</span>`;
+                
+                const clickedEnvCells = envNames.map(originalEnv => {
+                    const avgScore = ((clickedUid.env_scores && clickedUid.env_scores[originalEnv]) || 0) * 100;
+                    const threshold = ((clickedUid.env_thresholds && clickedUid.env_thresholds[originalEnv]) || 0) * 100;
+                    const received = (clickedUid.env_sample_counts && clickedUid.env_sample_counts[originalEnv]) || 0;
+                    const total = (clickedUid.env_total_problems && clickedUid.env_total_problems[originalEnv]) || 0;
+                    const completenessColor = total > 0 && received >= total * 0.95 ? 'green' : 'red';
+                    return `<td>${avgScore.toFixed(1)}[${threshold.toFixed(1)}]<br><span style="font-size: 0.7em; color: ${completenessColor};">(${received}/${total})</span></td>`;
+                }).join('');
+                
+                let clickedTotalAvg = 0;
+                let clickedEnvCount = 0;
+                envNames.forEach(originalEnv => {
+                    const score = (clickedUid.env_scores && clickedUid.env_scores[originalEnv]) || 0;
+                    if (score > 0) {
+                        clickedTotalAvg += score;
+                        clickedEnvCount++;
+                    }
+                });
+                const clickedOverallAvg = clickedEnvCount > 0 ? (clickedTotalAvg / clickedEnvCount) * 100 : 0;
+                
+                clickedRow.innerHTML = `
+                    <td><strong class="uid-cell" onclick="copyUidToClipboard(${clickedUid.uid}, event)" title="Click to copy UID">${clickedUid.uid}</strong></td>
+                    <td class="model-name" style="text-align: left;">${clickedModelNameDisplay}</td>
+                    <td>${clickedDominatedByHtml}</td>
+                    ${clickedEnvCells}
+                    <td data-value="${clickedOverallAvg}"><span>${clickedOverallAvg.toFixed(1)}</span></td>
+                    <td>
+                        <span class="age">${clickedUid.age_days.toFixed(2)}</span>
+                        ${clickedUid.first_block ? `<span class="first-block">${clickedUid.first_block.toLocaleString()}</span>` : ''}
+                    </td>
+                    <td><span class="Points(%)">${((clickedUid.points || 0) * 100).toFixed(2)}</span></td>
+                `;
+                
+                tbody.appendChild(clickedRow);
+            }
+            
+            // Add dominating UIDs
+            sortedDomUids.forEach(domUid => {
+                const row = document.createElement('tr');
+                if (!domUid.is_active) {
+                    row.className = 'ineligible-uid-row';
+                }
+                
+                let dominatedByHtml = '0';
+                if (domUid.dominated_by_count > 0) {
+                    const activeCount = domUid.dominating_active_count || 0;
+                    dominatedByHtml = `
+                        <a href="#" onclick="showDetailView(${domUid.uid}); return false;" class="clickable" title="Click to see details">
+                            ${domUid.dominated_by_count}
+                        </a>
+                    `;
+                }
+                
+                    const modelName = domUid.model_name || 'N/A';
+                    const modelNameDisplay = modelName !== 'N/A' 
+                        ? `<a href="https://huggingface.co/${modelName.split('@')[0]}" target="_blank" style="color: #667eea; text-decoration: none;" class="model-name" title="${modelName}">${modelName}</a>`
+                        : `<span style="color: #6b7280;" class="model-name" title="UID ${domUid.uid}">UID ${domUid.uid}</span>`;
+                
+                const envCells = envNames.map(originalEnv => {
+                    const avgScore = ((domUid.env_scores && domUid.env_scores[originalEnv]) || 0) * 100;
+                    const threshold = ((domUid.env_thresholds && domUid.env_thresholds[originalEnv]) || 0) * 100;
+                    const received = (domUid.env_sample_counts && domUid.env_sample_counts[originalEnv]) || 0;
+                    const total = (domUid.env_total_problems && domUid.env_total_problems[originalEnv]) || 0;
+                    const completenessColor = total > 0 && received >= total * 0.95 ? 'green' : 'red';
+                    const ci = (domUid.env_confidence_intervals && domUid.env_confidence_intervals[originalEnv]) || [0.0, 0.0];
+                    const upper = (ci[1] || 0) * 100;
+                    const maxUpper = envFrontierUppers[originalEnv] || 0;
+                    // Only highlight if UID is on Pareto frontier AND score matches frontier
+                    const isFrontierScore = domUid.on_pareto_frontier && domUid.has_data && 
+                                          Math.abs(upper - maxUpper) < 0.1;
+                    const paretoClass = isFrontierScore ? 'pareto-frontier' : '';
+                    return `<td class="${paretoClass}">${avgScore.toFixed(1)}[${threshold.toFixed(1)}]<br><span style="font-size: 0.7em; color: ${completenessColor};">(${received}/${total})</span></td>`;
+                }).join('');
+                
+                let totalAvg = 0;
+                let envCount = 0;
+                envNames.forEach(originalEnv => {
+                    const score = (domUid.env_scores && domUid.env_scores[originalEnv]) || 0;
+                    if (score > 0) {
+                        totalAvg += score;
+                        envCount++;
+                    }
+                });
+                const overallAvg = envCount > 0 ? (totalAvg / envCount) * 100 : 0;
+                
+                const pointsParetoClass = domUid.on_pareto_frontier ? 'pareto-frontier' : '';
+                
+                row.innerHTML = `
+                    <td><strong class="uid-cell" onclick="copyUidToClipboard(${domUid.uid}, event)" title="Click to copy UID">${domUid.uid}</strong></td>
+                    <td class="model-name" style="text-align: left;">${modelNameDisplay}</td>
+                    <td>${dominatedByHtml}</td>
+                    ${envCells}
+                    <td data-value="${overallAvg}"><span>${overallAvg.toFixed(1)}</span></td>
+                    <td>
+                        <span class="age">${domUid.age_days.toFixed(2)}</span>
+                        ${domUid.first_block ? `<span class="first-block">${domUid.first_block.toLocaleString()}</span>` : ''}
+                    </td>
+                    <td class="${pointsParetoClass}"><span class="Points(%)">${((domUid.points || 0) * 100).toFixed(2)}</span></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Update sort indicators
+            updateSortIndicators();
+        }
+
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#tableBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchInput) ? '' : 'none';
+            });
+        }
+
+        // refreshData() - Only uses cached data, never triggers calculation
+        async function refreshData() {
+            try {
+                // Check if we're viewing a detail page
+                if (currentViewUid !== null) {
+                    await showDetailView(currentViewUid);
+                    return;
+                }
+                
+                // Check if we're on a detail page (from URL)
+                if (typeof detailUid !== 'undefined' && detailUid !== null) {
+                    currentViewUid = detailUid;
+                    await showDetailView(detailUid);
+                    return;
+                }
+                
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('errorContainer').innerHTML = '';
+                
+                const blockInput = document.getElementById('blockInput')?.value;
+                const params = new URLSearchParams();
+                if (blockInput) {
+                    params.append('block', blockInput);
+                }
+                
+                // Only use cached data - no calculation (refresh=false)
+                const response = await fetch(`/api/dominance?${params}&refresh=false`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Check if we got empty data (no cache)
+                if (!data.uids || data.uids.length === 0) {
+                    const errorContainer = document.getElementById('errorContainer');
+                    if (errorContainer) {
+                        errorContainer.innerHTML = `<div class="error">No cached data available. Please click "Refresh & Calculate" to compute dominance relationships.</div>`;
+                    }
+                    document.getElementById('loading').style.display = 'none';
+                    return;
+                }
+                
+                console.log('Received cached data:', data);
+                currentData = data;
+                updateUI(data);
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                const errorContainer = document.getElementById('errorContainer');
+                if (errorContainer) {
+                    errorContainer.innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+                }
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            }
+        }
+        
+        // refreshDataWithCalculation() - Calculates ALL data in one API call
+        async function refreshDataWithCalculation() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('errorContainer').innerHTML = '';
+                document.getElementById('loading').textContent = 'Calculating all dominance relationships in one call...';
+                
+                const blockInput = document.getElementById('blockInput')?.value;
+                const params = new URLSearchParams();
+                if (blockInput) {
+                    params.append('block', blockInput);
+                }
+                
+                // Single API call that calculates everything at once
+                console.log('Calculating all dominance data in one API call...');
+                const response = await fetch(`/api/dominance/refresh-all?${params}`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to calculate dominance data');
+                }
+                
+                // Store main data
+                currentData = result.main_data;
+                
+                // Store all detail data in cache (keys are already strings from server)
+                dominanceDetailCache = result.detail_data || {};
+                
+                console.log(`Calculated main data and ${Object.keys(dominanceDetailCache).length} detail relationships in one call`);
+                document.getElementById('loading').textContent = 'Loading dominance data...';
+                
+                // Update UI with main data
+                updateUI(currentData);
+                
+                console.log('All calculations complete. Data cached for main view and all detail views.');
+            } catch (error) {
+                console.error('Error calculating data:', error);
+                const errorContainer = document.getElementById('errorContainer');
+                if (errorContainer) {
+                    errorContainer.innerHTML = `<div class="error">Error calculating data: ${error.message}</div>`;
+                }
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            }
+        }
+
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            const btn = document.getElementById('autoRefreshBtn');
+            btn.textContent = `Auto-Refresh: ${autoRefresh ? 'ON' : 'OFF'}`;
+            
+            if (autoRefresh && !refreshInterval) {
+                refreshInterval = setInterval(refreshData, 1200000); // 10 minutes (same as WebSocket was)
+            } else if (!autoRefresh && refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        function loadBlockData() {
+            refreshData();
+        }
+
+        function navigateToUidPage(uid) {
+            window.location.href = `/uid/${uid}`;
+        }
+        
+        // Store current view state
+        let currentViewUid = null;
+        
+        // Function to copy UID to clipboard
+        async function copyUidToClipboard(uid, event) {
+            try {
+                await navigator.clipboard.writeText(String(uid));
+                // Show temporary feedback
+                const target = event.target;
+                const originalText = target.textContent;
+                target.textContent = 'Copied!';
+                target.style.color = '#10b981';
+                setTimeout(() => {
+                    target.textContent = originalText;
+                    target.style.color = '';
+                }, 1000);
+            } catch (err) {
+                console.error('Failed to copy UID:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = String(uid);
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const target = event.target;
+                    target.textContent = 'Copied!';
+                    target.style.color = '#10b981';
+                    setTimeout(() => {
+                        target.textContent = String(uid);
+                        target.style.color = '';
+                    }, 1000);
+                } catch (fallbackErr) {
+                    console.error('Fallback copy failed:', fallbackErr);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('dominanceModal');
+            modal.classList.remove('show');
+            document.getElementById('modalBody').innerHTML = '';
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('dominanceModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+        
+        async function showDetailView(uid) {
+            try {
+                console.log(`showDetailView called for UID ${uid}`);
+                console.log('currentData:', currentData);
+                console.log('dominanceDetailCache keys:', Object.keys(dominanceDetailCache));
+                
+                // Use cached data - no API calls needed if data was pre-calculated
+                let allData = currentData;
+                let data = null;
+                
+                if (!allData || !allData.uids || allData.uids.length === 0) {
+                    // No cached main data
+                    document.getElementById('modalBody').innerHTML = '<div class="error">No data available. Please click "Refresh & Calculate" first.</div>';
+                    document.getElementById('dominanceModal').classList.add('show');
+                    return;
+                }
+                
+                // Check if we have cached detail data for this UID (convert to string for lookup)
+                const uidKey = String(uid);
+                console.log(`Looking for cached data for UID ${uid} (key: ${uidKey})`);
+                console.log(`Cache has ${Object.keys(dominanceDetailCache).length} entries`);
+                
+                if (dominanceDetailCache[uidKey]) {
+                    // Use pre-calculated cached detail data - no API call needed
+                    console.log(`Using cached detail data for UID ${uid} (no API call)`);
+                    data = dominanceDetailCache[uidKey];
+                    console.log('Cached data:', data);
+                } else {
+                    // Detail data not in cache - try to build it from main data
+                    console.log(`Detail data not in cache for UID ${uid}, building from main data...`);
+                    const uidStatus = allData.uids.find(u => u.uid === uid);
+                    if (uidStatus && uidStatus.dominating_uids && uidStatus.dominating_uids.length > 0) {
+                        // Build detail data from main data
+                        const dominating_details = [];
+                        for (const dom_uid of uidStatus.dominating_uids) {
+                            const dom_status = allData.uids.find(u => u.uid === dom_uid);
+                            if (dom_status) {
+                                dominating_details.push(dom_status);
+                            }
+                        }
+                        data = {
+                            uid: uid,
+                            dominating_uids: dominating_details,
+                            total_count: dominating_details.length,
+                            expected_count: uidStatus.dominating_uids.length,
+                            active_count: uidStatus.dominating_active_count,
+                            non_active_count: uidStatus.dominating_non_active_count
+                        };
+                        // Cache it for future use
+                        dominanceDetailCache[uidKey] = data;
+                        console.log(`Built and cached detail data for UID ${uid}: ${dominating_details.length} dominating UIDs`);
+                    } else {
+                        // No dominating UIDs or UID not found
+                        document.getElementById('modalBody').innerHTML = '<div class="error">Detail data not available. Please click "Refresh & Calculate" to pre-calculate all relationships.</div>';
+                        document.getElementById('modalTitle').textContent = `UID ${uid} - Dominance Details`;
+                        document.getElementById('dominanceModal').classList.add('show');
+                        return;
+                    }
+                }
+                
+                // Find the clicked UID's data
+                const clickedUidData = allData.uids.find(u => u.uid === uid);
+                
+                // Validate data structure
+                if (!data || !data.dominating_uids || !Array.isArray(data.dominating_uids)) {
+                    document.getElementById('modalBody').innerHTML = '<div class="error">Invalid data structure.</div>';
+                    document.getElementById('dominanceModal').classList.add('show');
+                    return;
+                }
+                
+                console.log(`UID ${uid} has ${data.dominating_uids.length} dominating UIDs`);
+                
+                if (data.dominating_uids.length === 0) {
+                    document.getElementById('modalBody').innerHTML = '<div style="padding: 20px; text-align: center;">This UID is not dominated by any other UID.</div>';
+                    document.getElementById('modalTitle').textContent = `UID ${uid} - Dominance Details`;
+                    document.getElementById('dominanceModal').classList.add('show');
+                    return;
+                }
+                
+                // Get environment names - use clicked UID's env names if available, otherwise use first dominating UID
+                let domEnvNames = [];
+                if (clickedUidData && clickedUidData.env_scores) {
+                    domEnvNames = Object.keys(clickedUidData.env_scores);
+                } else if (data.dominating_uids.length > 0) {
+                    const firstDomUid = data.dominating_uids[0];
+                    domEnvNames = firstDomUid ? Object.keys(firstDomUid.env_scores || {}) : [];
+                }
+                const domEnvCleanNames = domEnvNames.map(env => cleanEnvName(env));
+                
+                // Create mapping for environment names
+                const domEnvNameMap = {};
+                domEnvNames.forEach(originalName => {
+                    const cleanName = cleanEnvName(originalName);
+                    domEnvNameMap[cleanName] = originalName;
+                });
+                
+                // Calculate which environment scores are on the frontier for detail page
+                const domEnvFrontierUppers = {};
+                domEnvNames.forEach(originalEnv => {
+                    let maxUpper = 0;
+                    data.dominating_uids.forEach(u => {
+                        if (u.on_pareto_frontier && u.has_data) {
+                            const ci = (u.env_confidence_intervals && u.env_confidence_intervals[originalEnv]) || [0.0, 0.0];
+                            const upper = (ci[1] || 0) * 100;
+                            if (upper > maxUpper) {
+                                maxUpper = upper;
+                            }
+                        }
+                    });
+                    domEnvFrontierUppers[originalEnv] = maxUpper;
+                });
+                
+                // Sort dominating UIDs by points (descending) by default
+                let sortedDomUids = [...data.dominating_uids];
+                sortedDomUids.sort((a, b) => {
+                    const aPoints = a.points || 0;
+                    const bPoints = b.points || 0;
+                    return bPoints - aPoints;
+                });
+                
+                // Build modal HTML
+                const domEnvHeaders = domEnvCleanNames.map(cleanEnv => {
+                    const originalEnv = domEnvNameMap[cleanEnv];
+                    return `<th>${cleanEnv}</th>`;
+                }).join('');
+                
+                let tableRows = '';
+                
+                // First, add the clicked UID's row
+                if (clickedUidData) {
+                    const clickedRowClass = !clickedUidData.is_active ? 'ineligible-uid-row' : 'clicked-uid-row';
+                    let clickedDominatedByHtml = '0';
+                    if (clickedUidData.dominated_by_count > 0) {
+                        const activeCount = clickedUidData.dominating_active_count || 0;
+                        clickedDominatedByHtml = `<a href="#" onclick="showDetailView(${clickedUidData.uid}); return false;" class="clickable">${clickedUidData.dominated_by_count}</a>`;
+                    }
+                    
+                    const clickedModelName = clickedUidData.model_name || 'N/A';
+                    const clickedModelNameDisplay = clickedModelName !== 'N/A' 
+                        ? `<a href="https://huggingface.co/${clickedModelName.split('@')[0]}" target="_blank" style="color: #dbeafe; text-decoration: none;" title="${clickedModelName}">${clickedModelName}</a>`
+                        : `<span style="color: white;" title="UID ${clickedUidData.uid}">UID ${clickedUidData.uid}</span>`;
+                    
+                    const clickedEnvCells = domEnvNames.map(originalEnv => {
+                        const avgScore = ((clickedUidData.env_scores && clickedUidData.env_scores[originalEnv]) || 0) * 100;
+                        const threshold = ((clickedUidData.env_thresholds && clickedUidData.env_thresholds[originalEnv]) || 0) * 100;
+                        const received = (clickedUidData.env_sample_counts && clickedUidData.env_sample_counts[originalEnv]) || 0;
+                        const total = (clickedUidData.env_total_problems && clickedUidData.env_total_problems[originalEnv]) || 0;
+                        const completenessColor = total > 0 && received >= total * 0.95 ? 'green' : 'red';
+                        return `<td>${avgScore.toFixed(1)}[${threshold.toFixed(1)}]<br><span style="font-size: 0.7em; color: ${completenessColor};">(${received}/${total})</span></td>`;
+                    }).join('');
+                    
+                    let clickedTotalAvg = 0;
+                    let clickedEnvCount = 0;
+                    domEnvNames.forEach(originalEnv => {
+                        const score = (clickedUidData.env_scores && clickedUidData.env_scores[originalEnv]) || 0;
+                        if (score > 0) {
+                            clickedTotalAvg += score;
+                            clickedEnvCount++;
+                        }
+                    });
+                    const clickedOverallAvg = clickedEnvCount > 0 ? (clickedTotalAvg / clickedEnvCount) * 100 : 0;
+                    
+                    tableRows += `<tr class="${clickedRowClass}">
+                        <td><strong class="uid-cell" onclick="copyUidToClipboard(${clickedUidData.uid}, event)" title="Click to copy UID">${clickedUidData.uid}</strong></td>
+                        <td class="model-name" style="text-align: left;">${clickedModelNameDisplay}</td>
+                        <td>${clickedDominatedByHtml}</td>
+                        ${clickedEnvCells}
+                        <td>${clickedOverallAvg.toFixed(1)}</td>
+                        <td>${clickedUidData.age_days.toFixed(2)}${clickedUidData.first_block ? `<br><span style="font-size: 0.7em;">${clickedUidData.first_block.toLocaleString()}</span>` : ''}</td>
+                        <td>${((clickedUidData.points || 0) * 100).toFixed(2)}</td>
+                    </tr>`;
+                }
+                
+                // Add dominating UIDs rows
+                sortedDomUids.forEach(domUid => {
+                    const rowClass = !domUid.is_active ? 'ineligible-uid-row' : '';
+                    let dominatedByHtml = '0';
+                    if (domUid.dominated_by_count > 0) {
+                        const activeCount = domUid.dominating_active_count || 0;
+                        dominatedByHtml = `<a href="#" onclick="showDetailView(${domUid.uid}); return false;" class="clickable">${domUid.dominated_by_count}</a>`;
+                    }
+                    
+                    const modelName = domUid.model_name || 'N/A';
+                    const modelNameDisplay = modelName !== 'N/A' 
+                        ? `<a href="https://huggingface.co/${modelName.split('@')[0]}" target="_blank" style="color: #667eea; text-decoration: none;" class="model-name" title="${modelName}">${modelName}</a>`
+                        : `<span style="color: #6b7280;" class="model-name" title="UID ${domUid.uid}">UID ${domUid.uid}</span>`;
+                    
+                    const envCells = domEnvNames.map(originalEnv => {
+                        const avgScore = ((domUid.env_scores && domUid.env_scores[originalEnv]) || 0) * 100;
+                        const threshold = ((domUid.env_thresholds && domUid.env_thresholds[originalEnv]) || 0) * 100;
+                        const received = (domUid.env_sample_counts && domUid.env_sample_counts[originalEnv]) || 0;
+                        const total = (domUid.env_total_problems && domUid.env_total_problems[originalEnv]) || 0;
+                        const completenessColor = total > 0 && received >= total * 0.95 ? 'green' : 'red';
+                        const ci = (domUid.env_confidence_intervals && domUid.env_confidence_intervals[originalEnv]) || [0.0, 0.0];
+                        const upper = (ci[1] || 0) * 100;
+                        const maxUpper = domEnvFrontierUppers[originalEnv] || 0;
+                        const isFrontierScore = domUid.on_pareto_frontier && domUid.has_data && Math.abs(upper - maxUpper) < 0.1;
+                        const paretoClass = isFrontierScore ? 'pareto-frontier' : '';
+                        return `<td class="${paretoClass}">${avgScore.toFixed(1)}[${threshold.toFixed(1)}]<br><span style="font-size: 0.7em; color: ${completenessColor};">(${received}/${total})</span></td>`;
+                    }).join('');
+                    
+                    let totalAvg = 0;
+                    let envCount = 0;
+                    domEnvNames.forEach(originalEnv => {
+                        const score = (domUid.env_scores && domUid.env_scores[originalEnv]) || 0;
+                        if (score > 0) {
+                            totalAvg += score;
+                            envCount++;
+                        }
+                    });
+                    const overallAvg = envCount > 0 ? (totalAvg / envCount) * 100 : 0;
+                    const pointsParetoClass = domUid.on_pareto_frontier ? 'pareto-frontier' : '';
+                    
+                    tableRows += `<tr class="${rowClass}">
+                        <td><strong class="uid-cell" onclick="copyUidToClipboard(${domUid.uid}, event)" title="Click to copy UID">${domUid.uid}</strong></td>
+                        <td class="model-name" style="text-align: left;">${modelNameDisplay}</td>
+                        <td>${dominatedByHtml}</td>
+                        ${envCells}
+                        <td>${overallAvg.toFixed(1)}</td>
+                        <td>${domUid.age_days.toFixed(2)}${domUid.first_block ? `<br><span style="font-size: 0.7em;">${domUid.first_block.toLocaleString()}</span>` : ''}</td>
+                        <td class="${pointsParetoClass}">${((domUid.points || 0) * 100).toFixed(2)}</td>
+                    </tr>`;
+                });
+                
+                // Build complete modal HTML
+                const modalHTML = `
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th>UID</th>
+                                    <th>Model Name</th>
+                                    <th>Dominating</th>
+                                    ${domEnvHeaders}
+                                    <th>AVE</th>
+                                    <th>Age (days)</th>
+                                    <th>Points (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                // Update modal and show it
+                console.log('Setting modal content, tableRows length:', tableRows.length);
+                document.getElementById('modalTitle').textContent = `UID ${uid} - Dominance Relationships (${data.dominating_uids.length} dominating UIDs)`;
+                document.getElementById('modalBody').innerHTML = modalHTML;
+                const modal = document.getElementById('dominanceModal');
+                modal.classList.add('show');
+                console.log('Modal classes after adding show:', modal.className);
+                console.log('Modal display style:', window.getComputedStyle(modal).display);
+                
+            } catch (error) {
+                console.error('Error loading detail view:', error);
+                console.error('Error stack:', error.stack);
+                const errorMsg = `<div class="error">Error loading details: ${error.message}<br>Stack: ${error.stack}</div>`;
+                document.getElementById('modalBody').innerHTML = errorMsg;
+                const modal = document.getElementById('dominanceModal');
+                if (modal) {
+                    modal.classList.add('show');
+                    console.log('Modal shown after error, classes:', modal.className);
+                } else {
+                    console.error('Modal element not found!');
+                }
+            }
+        }
+
+        // Initialize
+        if (typeof detailUid !== 'undefined' && detailUid !== null) {
+            // On detail page, load the detail view
+            // On detail page, load the detail view
+            currentViewUid = detailUid;
+            showDetailView(detailUid);
+        } else {
+            // Load data on main page
+            // On initial load, try cached data first, but calculate if cache is empty
+            loadInitialData();
+            
+            // Set up auto-refresh (only uses cached data)
+            if (autoRefresh) {
+                refreshInterval = setInterval(refreshData, 1200000);
+            }
+        }
+        
+        // Initial load: try cache first, calculate if empty
+        async function loadInitialData() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('errorContainer').innerHTML = '';
+                
+                const blockInput = document.getElementById('blockInput')?.value;
+                const params = new URLSearchParams();
+                if (blockInput) {
+                    params.append('block', blockInput);
+                }
+                
+                // Try cached data first
+                let response = await fetch(`/api/dominance?${params}&refresh=false`);
+                let data = await response.json();
+                
+                // If no cached data, calculate once on initial load
+                if (!data.uids || data.uids.length === 0) {
+                    console.log('No cached data found, calculating on initial load...');
+                    response = await fetch(`/api/dominance?${params}&refresh=true`);
+                    data = await response.json();
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                console.log('Loaded data:', data);
+                currentData = data;
+                updateUI(data);
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+                const errorContainer = document.getElementById('errorContainer');
+                if (errorContainer) {
+                    errorContainer.innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+                }
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
