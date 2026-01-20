@@ -13,6 +13,12 @@ body {
 body {
   color: rgb(var(--foreground-rgb));
   background: #ffffff;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body {
+  background: #0f172a;
+  color: #f1f5f9;
 }
 
 a {
@@ -32,4 +38,8 @@ th, td {
 
 tr:nth-child(even) {
   background-color: #f2f2f2;
+}
+
+.dark tr:nth-child(even) {
+  background-color: #1e293b;
 }

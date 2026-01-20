@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
-import { ClipboardIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { ClipboardIcon, EyeIcon, EyeSlashIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { useTheme } from '../utils/theme';
 
 interface ModelData {
   uid: number;
@@ -54,6 +55,7 @@ function truncateModelFullName(name: string, cutLength: number = 36) {
 
 // The tooltip logic needs to be stateful and tight to the Model row (not globally), so we add hotkeyCopiedStates as a dictionary.
 export default function Home() {
+  const { theme, toggleTheme } = useTheme();
   const [data, setData] = useState<RankData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -500,12 +502,60 @@ export default function Home() {
           padding: '22px',
           fontFamily:
             'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
-          color: '#0b1220',
-          background:
-            'radial-gradient(1200px 600px at 20% 0%, rgba(56, 189, 248, 0.10), transparent 60%), radial-gradient(900px 500px at 90% 10%, rgba(34, 211, 238, 0.10), transparent 55%), linear-gradient(180deg, #f7fbff 0%, #ffffff 40%, #fbfeff 100%)',
-          minHeight: '100vh'
+          color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
+          background: theme === 'dark'
+            ? 'radial-gradient(1200px 600px at 20% 0%, rgba(30, 58, 138, 0.15), transparent 60%), radial-gradient(900px 500px at 90% 10%, rgba(15, 23, 42, 0.20), transparent 55%), linear-gradient(180deg, #0f172a 0%, #1e293b 40%, #0f172a 100%)'
+            : 'radial-gradient(1200px 600px at 20% 0%, rgba(56, 189, 248, 0.10), transparent 60%), radial-gradient(900px 500px at 90% 10%, rgba(34, 211, 238, 0.10), transparent 55%), linear-gradient(180deg, #f7fbff 0%, #ffffff 40%, #fbfeff 100%)',
+          minHeight: '100vh',
+          position: 'relative'
         }}
       >
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 1000,
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            border: theme === 'dark' ? '1px solid rgba(148, 163, 184, 0.3)' : '1px solid rgba(148, 163, 184, 0.2)',
+            background: theme === 'dark' 
+              ? 'rgba(30, 41, 59, 0.8)' 
+              : 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: theme === 'dark'
+              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+              : '0 4px 12px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s ease',
+            color: theme === 'dark' ? '#fbbf24' : '#f59e0b'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.background = theme === 'dark' 
+              ? 'rgba(30, 41, 59, 0.95)' 
+              : 'rgba(255, 255, 255, 1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.background = theme === 'dark' 
+              ? 'rgba(30, 41, 59, 0.8)' 
+              : 'rgba(255, 255, 255, 0.9)';
+          }}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? (
+            <SunIcon width={24} height={24} />
+          ) : (
+            <MoonIcon width={24} height={24} />
+          )}
+        </button>
         <div style={{ marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px' }}>
             <div style={{ textAlign: 'center', width: '100%' }}>
@@ -519,7 +569,7 @@ export default function Home() {
                   alignItems: 'center',
                   marginTop: 12,
                   fontSize: 13,
-                  color: '#3b556a',
+                  color: theme === 'dark' ? '#94a3b8' : '#3b556a',
                   width: '100%',
                 }}
               >
@@ -531,7 +581,7 @@ export default function Home() {
                     gap: '8px',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    color: '#0b1220',
+                    color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
                     userSelect: 'none',
                   }}
                 >
@@ -543,7 +593,7 @@ export default function Home() {
                       width: '16px',
                       height: '16px',
                       cursor: 'pointer',
-                      accentColor: '#0ea5e9',
+                      accentColor: theme === 'dark' ? '#60a5fa' : '#0ea5e9',
                     }}
                   />
                   <span>Group models</span>
@@ -555,7 +605,7 @@ export default function Home() {
                     gap: '8px',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    color: '#0b1220',
+                    color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
                     userSelect: 'none',
                   }}
                 >
@@ -567,7 +617,7 @@ export default function Home() {
                       width: '16px',
                       height: '16px',
                       cursor: 'pointer',
-                      accentColor: '#adb05f',
+                      accentColor: theme === 'dark' ? '#cbd05f' : '#adb05f',
                     }}
                   />
                   <span>Team models</span>
@@ -580,20 +630,32 @@ export default function Home() {
         {/* ... error and info UI unchanged ... */}
 
         {error && (
-          <div style={{ padding: '10px', backgroundColor: '#fee', color: '#c00', borderRadius: '5px', marginBottom: '20px' }}>
+          <div style={{ 
+            padding: '10px', 
+            backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : '#fee', 
+            color: theme === 'dark' ? '#fca5a5' : '#c00', 
+            borderRadius: '5px', 
+            marginBottom: '20px' 
+          }}>
             Error: {error}
           </div>
         )}
 
         {data?.error && (
-          <div style={{ padding: '10px', backgroundColor: '#ffe', color: '#cc0', borderRadius: '5px', marginBottom: '20px' }}>
+          <div style={{ 
+            padding: '10px', 
+            backgroundColor: theme === 'dark' ? 'rgba(234, 179, 8, 0.2)' : '#ffe', 
+            color: theme === 'dark' ? '#fde047' : '#cc0', 
+            borderRadius: '5px', 
+            marginBottom: '20px' 
+          }}>
             Warning: {data.error}
           </div>
         )}
 
         {loading && !data && (
           <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div>Loading...</div>
+            <div style={{ color: theme === 'dark' ? '#f1f5f9' : '#0b1220' }}>Loading...</div>
           </div>
         )}
 
@@ -603,25 +665,33 @@ export default function Home() {
               width: '100%',
               maxWidth: '100%',
               borderRadius: 16,
-              background: 'rgba(255,255,255,0.7)',
-              border: '1px solid rgba(148, 163, 184, 0.35)',
-              boxShadow: '0 18px 45px rgba(15, 23, 42, 0.08)',
+              background: theme === 'dark' 
+                ? 'rgba(30, 41, 59, 0.8)' 
+                : 'rgba(255,255,255,0.7)',
+              border: theme === 'dark'
+                ? '1px solid rgba(148, 163, 184, 0.2)'
+                : '1px solid rgba(148, 163, 184, 0.35)',
+              boxShadow: theme === 'dark'
+                ? '0 18px 45px rgba(0, 0, 0, 0.3)'
+                : '0 18px 45px rgba(15, 23, 42, 0.08)',
               backdropFilter: 'blur(10px)'
             }}
           >
             <div
-              style={{
-                maxHeight: 820,
-                overflowY: 'auto',
-                overflowX: 'auto',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#36a3fc #f2f6fa',
-                borderRadius: 12,
-                boxShadow: "0 6px 16px rgba(56,107,180,0.04)",
-                width: '100%',
-                maxWidth: '100%'
-              }}
-              className="modern-scrollbar"
+                style={{
+                  maxHeight: 820,
+                  overflowY: 'auto',
+                  overflowX: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: theme === 'dark' ? '#475569 #1e293b' : '#36a3fc #f2f6fa',
+                  borderRadius: 12,
+                  boxShadow: theme === 'dark'
+                    ? "0 6px 16px rgba(0, 0, 0, 0.2)"
+                    : "0 6px 16px rgba(56,107,180,0.04)",
+                  width: '100%',
+                  maxWidth: '100%'
+                }}
+                className={`modern-scrollbar ${theme === 'dark' ? 'dark' : ''}`}
             >
               <table style={{ borderCollapse: 'separate', borderSpacing: 0, fontSize: '14px', width: '100%', tableLayout: 'auto' }}>
                 <thead>
@@ -631,7 +701,9 @@ export default function Home() {
                       position: 'sticky',
                       top: 0,
                       zIndex: 2,
-                      background: 'linear-gradient(180deg, rgba(226, 246, 255, 0.95) 0%, rgba(240, 251, 255, 0.90) 100%)',
+                      background: theme === 'dark'
+                        ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.90) 100%)'
+                        : 'linear-gradient(180deg, rgba(226, 246, 255, 0.95) 0%, rgba(240, 251, 255, 0.90) 100%)',
                       backdropFilter: 'blur(10px)'
                     }}
                   >
@@ -660,9 +732,13 @@ export default function Home() {
                             fontSize: 12,
                             letterSpacing: '0.08em',
                             textTransform: 'uppercase',
-                            color: '#0f3550',
-                            borderBottom: '1px solid rgba(148, 163, 184, 0.55)',
-                            borderRight: i === arr.length - 1 ? 'none' : '1px solid rgba(226, 232, 240, 0.9)',
+                            color: theme === 'dark' ? '#cbd5e1' : '#0f3550',
+                            borderBottom: theme === 'dark'
+                              ? '1px solid rgba(148, 163, 184, 0.3)'
+                              : '1px solid rgba(148, 163, 184, 0.55)',
+                            borderRight: i === arr.length - 1 ? 'none' : (theme === 'dark'
+                              ? '1px solid rgba(51, 65, 85, 0.5)'
+                              : '1px solid rgba(226, 232, 240, 0.9)'),
                             cursor: isSortable ? 'pointer' : 'default',
                             userSelect: 'none',
                             position: 'relative',
@@ -707,9 +783,13 @@ export default function Home() {
                             fontSize: 12,
                             letterSpacing: '0.08em',
                             textTransform: 'uppercase',
-                            color: '#0f3550',
-                            borderBottom: '1px solid rgba(148, 163, 184, 0.55)',
-                            borderRight: '1px solid rgba(226, 232, 240, 0.9)',
+                            color: theme === 'dark' ? '#cbd5e1' : '#0f3550',
+                            borderBottom: theme === 'dark'
+                              ? '1px solid rgba(148, 163, 184, 0.3)'
+                              : '1px solid rgba(148, 163, 184, 0.55)',
+                            borderRight: theme === 'dark'
+                              ? '1px solid rgba(51, 65, 85, 0.5)'
+                              : '1px solid rgba(226, 232, 240, 0.9)',
                             cursor: 'pointer',
                             userSelect: 'none',
                             position: 'relative',
@@ -755,9 +835,9 @@ export default function Home() {
                               title={isHidingIncomplete ? `Show incomplete ${env} models` : `Hide incomplete ${env} models`}
                             >
                               {isHidingIncomplete ? (
-                                <EyeSlashIcon width={16} height={16} style={{ color: '#94a3b8' }} />
+                                <EyeSlashIcon width={16} height={16} style={{ color: theme === 'dark' ? '#64748b' : '#94a3b8' }} />
                               ) : (
-                                <EyeIcon width={16} height={16} style={{ color: '#0f3550' }} />
+                                <EyeIcon width={16} height={16} style={{ color: theme === 'dark' ? '#cbd5e1' : '#0f3550' }} />
                               )}
                             </button>
                           </div>
@@ -780,12 +860,16 @@ export default function Home() {
                     const teamRow = isTeamModel(model.modelName);
 
                     const rowBg = hasWeight
-                      ? 'linear-gradient(180deg, rgba(219, 251, 255, 0.85) 0%, rgba(240, 253, 250, 0.70) 100%)'
+                      ? theme === 'dark'
+                        ? 'linear-gradient(180deg, rgba(14, 165, 233, 0.15) 0%, rgba(34, 211, 238, 0.10) 100%)'
+                        : 'linear-gradient(180deg, rgba(219, 251, 255, 0.85) 0%, rgba(240, 253, 250, 0.70) 100%)'
                       : isDominated
-                        ? 'linear-gradient(180deg, rgba(255, 247, 237, 0.95) 0%, rgba(255, 251, 235, 0.85) 100%)'
+                        ? theme === 'dark'
+                          ? 'linear-gradient(180deg, rgba(251, 146, 60, 0.15) 0%, rgba(245, 158, 11, 0.10) 100%)'
+                          : 'linear-gradient(180deg, rgba(255, 247, 237, 0.95) 0%, rgba(255, 251, 235, 0.85) 100%)'
                         : index % 2 === 0
-                          ? '#ffffff'
-                          : 'rgba(248, 250, 252, 0.75)';
+                          ? theme === 'dark' ? '#1e293b' : '#ffffff'
+                          : theme === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(248, 250, 252, 0.75)';
 
                     const leftAccent = hasWeight
                       ? '4px solid rgba(14, 165, 233, 0.9)'
@@ -799,10 +883,10 @@ export default function Home() {
                     const finalLeftAccent = leftAccent;
                     
                     const modelNameColor = myRow
-                      ? '#22c55e'
+                      ? theme === 'dark' ? '#4ade80' : '#22c55e'
                       : teamRow
-                        ? '#adb05f'
-                        : '#0b1220';
+                        ? theme === 'dark' ? '#cbd05f' : '#adb05f'
+                        : theme === 'dark' ? '#f1f5f9' : '#0b1220';
                     
                     return (
                       <tr
@@ -815,10 +899,16 @@ export default function Home() {
                           borderLeft: finalLeftAccent
                         }}
                       >
-                        <td style={{ padding: '12px', borderBottom: '1px solid rgba(226, 232, 240, 0.9)', textAlign: 'center' }}>
+                        <td style={{ 
+                          padding: '12px', 
+                          borderBottom: theme === 'dark' 
+                            ? '1px solid rgba(51, 65, 85, 0.5)' 
+                            : '1px solid rgba(226, 232, 240, 0.9)', 
+                          textAlign: 'center' 
+                        }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                             {!badge && (
-                              <span style={{ fontWeight: 800, color: '#0b1220' }}>{rank}</span>
+                              <span style={{ fontWeight: 800, color: theme === 'dark' ? '#f1f5f9' : '#0b1220' }}>{rank}</span>
                             )}
                             {badge && (
                               <span
@@ -829,9 +919,13 @@ export default function Home() {
                                   width: 26,
                                   height: 26,
                                   borderRadius: 999,
-                                  background: 'rgba(255,255,255,0.8)',
-                                  border: '1px solid rgba(148, 163, 184, 0.45)',
-                                  boxShadow: '0 6px 14px rgba(15, 23, 42, 0.10)'
+                                  background: theme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255,255,255,0.8)',
+                                  border: theme === 'dark'
+                                    ? '1px solid rgba(148, 163, 184, 0.3)'
+                                    : '1px solid rgba(148, 163, 184, 0.45)',
+                                  boxShadow: theme === 'dark'
+                                    ? '0 6px 14px rgba(0, 0, 0, 0.2)'
+                                    : '0 6px 14px rgba(15, 23, 42, 0.10)'
                                 }}
                                 title={`Top ${rank}`}
                               >
@@ -840,12 +934,18 @@ export default function Home() {
                             )}
                           </div>
                         </td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid rgba(226, 232, 240, 0.9)', textAlign: 'center' }}>
+                        <td style={{ 
+                          padding: '12px', 
+                          borderBottom: theme === 'dark' 
+                            ? '1px solid rgba(51, 65, 85, 0.5)' 
+                            : '1px solid rgba(226, 232, 240, 0.9)', 
+                          textAlign: 'center' 
+                        }}>
                           <span
                             style={{
                               fontVariantNumeric: 'tabular-nums',
                               fontWeight: 800,
-                              color: '#0f172a'
+                              color: theme === 'dark' ? '#f1f5f9' : '#0f172a'
                             }}
                           >
                             {model.uid}
@@ -853,7 +953,9 @@ export default function Home() {
                         </td>
                          <td style={{ 
                            padding: '12px', 
-                           borderBottom: '1px solid rgba(226, 232, 240, 0.9)',
+                           borderBottom: theme === 'dark' 
+                             ? '1px solid rgba(51, 65, 85, 0.5)' 
+                             : '1px solid rgba(226, 232, 240, 0.9)',
                            width: '1%'
                          }}>
                            <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
@@ -884,7 +986,16 @@ export default function Home() {
                                <span style={{ color: modelNameColor }}>{model.modelName}</span>
                              )}
                            </div>
-                           <div style={{ marginTop: 4, fontSize: 12, color: '#3b556a', display: 'flex', alignItems: 'center', gap: 10, position: 'relative', flexWrap: 'wrap' }}>
+                           <div style={{ 
+                             marginTop: 4, 
+                             fontSize: 12, 
+                             color: theme === 'dark' ? '#94a3b8' : '#3b556a', 
+                             display: 'flex', 
+                             alignItems: 'center', 
+                             gap: 10, 
+                             position: 'relative', 
+                             flexWrap: 'wrap' 
+                           }}>
                              <button
                                onClick={(e) => {
                                  e.stopPropagation();
@@ -935,10 +1046,10 @@ export default function Home() {
                                  target="_blank"
                                  rel="noopener noreferrer"
                                  style={{
-                                   color: '#0369a1',
-                                   textDecoration: 'none',
-                                   fontWeight: 600
-                                 }}
+                                 color: theme === 'dark' ? '#60a5fa' : '#0369a1',
+                                 textDecoration: 'none',
+                                 fontWeight: 600
+                               }}
                                  onMouseEnter={(e) => {
                                    e.currentTarget.style.textDecoration = 'underline';
                                  }}
@@ -955,7 +1066,7 @@ export default function Home() {
                                  target="_blank"
                                  rel="noopener noreferrer"
                                  style={{
-                                   color: '#0369a1',
+                                   color: theme === 'dark' ? '#60a5fa' : '#0369a1',
                                    textDecoration: 'none',
                                    fontWeight: 600
                                  }}
@@ -974,7 +1085,7 @@ export default function Home() {
                                 style={{
                                   marginTop: 4,
                                   cursor: 'pointer',
-                                  color: '#0369a1',
+                                  color: theme === 'dark' ? '#60a5fa' : '#0369a1',
                                   fontWeight: 800,
                                   fontSize: 12,
                                   userSelect: 'none',
@@ -1000,8 +1111,8 @@ export default function Home() {
                                       top: '50%',
                                       transform: 'translateY(-50%)',
                                       marginLeft: 10,
-                                      background: 'rgba(0,0,0,0.78)',
-                                      color: '#fff',
+                                      background: theme === 'dark' ? 'rgba(30, 41, 59, 0.95)' : 'rgba(0,0,0,0.78)',
+                                      color: theme === 'dark' ? '#f1f5f9' : '#fff',
                                       fontWeight: 600,
                                       padding: '4px 12px',
                                       borderRadius: 9,
@@ -1020,35 +1131,59 @@ export default function Home() {
                           </div>
                         </td>
                         {/* ... rest of the table row remains unchanged ... */}
-                        <td style={{ padding: '12px', borderBottom: '1px solid rgba(226, 232, 240, 0.9)', textAlign: 'center' }}>
-                          <div style={{ fontWeight: 900, color: '#0f172a', fontVariantNumeric: 'tabular-nums' }}>
+                        <td style={{ 
+                          padding: '12px', 
+                          borderBottom: theme === 'dark' 
+                            ? '1px solid rgba(51, 65, 85, 0.5)' 
+                            : '1px solid rgba(226, 232, 240, 0.9)', 
+                          textAlign: 'center' 
+                        }}>
+                          <div style={{ fontWeight: 900, color: theme === 'dark' ? '#f1f5f9' : '#0f172a', fontVariantNumeric: 'tabular-nums' }}>
                             {formatAgeDays(model.firstBlk)}
                           </div>
-                          <div style={{ marginTop: 4, fontSize: 12, color: '#3b556a', fontVariantNumeric: 'tabular-nums' }}>
+                          <div style={{ marginTop: 4, fontSize: 12, color: theme === 'dark' ? '#94a3b8' : '#3b556a', fontVariantNumeric: 'tabular-nums' }}>
                             FirstBlk: {model.firstBlk}
                           </div>
                         </td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid rgba(226, 232, 240, 0.9)', textAlign: 'center' }}>
+                        <td style={{ 
+                          padding: '12px', 
+                          borderBottom: theme === 'dark' 
+                            ? '1px solid rgba(51, 65, 85, 0.5)' 
+                            : '1px solid rgba(226, 232, 240, 0.9)', 
+                          textAlign: 'center' 
+                        }}>
                           {model.modelSizeGB !== null && model.modelSizeGB !== undefined ? (
-                            <div style={{ fontWeight: 900, color: '#ef4444', fontVariantNumeric: 'tabular-nums' }}>
+                            <div style={{ fontWeight: 900, color: theme === 'dark' ? '#f87171' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>
                               {model.modelSizeGB.toFixed(2)} GB
                             </div>
                           ) : fetchingSizes.has(model.uid) && model.modelFullName ? (
-                            <div style={{ fontSize: 12, color: '#0ea5e9', fontStyle: 'italic' }}>
+                            <div style={{ fontSize: 12, color: theme === 'dark' ? '#60a5fa' : '#0ea5e9', fontStyle: 'italic' }}>
                               Loading...
                             </div>
                           ) : (
-                            <div style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>
+                            <div style={{ fontSize: 12, color: theme === 'dark' ? '#64748b' : '#94a3b8', fontStyle: 'italic' }}>
                               -
                             </div>
                           )}
                         </td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid rgba(226, 232, 240, 0.9)', textAlign: 'center' }}>
-                          <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 800, color: '#0f172a' }}>
+                        <td style={{ 
+                          padding: '12px', 
+                          borderBottom: theme === 'dark' 
+                            ? '1px solid rgba(51, 65, 85, 0.5)' 
+                            : '1px solid rgba(226, 232, 240, 0.9)', 
+                          textAlign: 'center' 
+                        }}>
+                          <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 800, color: theme === 'dark' ? '#f1f5f9' : '#0f172a' }}>
                             {formatScore(model.points)}
                           </span>
                         </td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid rgba(226, 232, 240, 0.9)', textAlign: 'center' }}>
+                        <td style={{ 
+                          padding: '12px', 
+                          borderBottom: theme === 'dark' 
+                            ? '1px solid rgba(51, 65, 85, 0.5)' 
+                            : '1px solid rgba(226, 232, 240, 0.9)', 
+                          textAlign: 'center' 
+                        }}>
                           <span
                             style={{
                               display: 'inline-flex',
@@ -1059,13 +1194,23 @@ export default function Home() {
                               borderRadius: 999,
                               fontVariantNumeric: 'tabular-nums',
                               fontWeight: 800,
-                              color: hasWeight ? '#003b5c' : '#334155',
+                              color: hasWeight 
+                                ? (theme === 'dark' ? '#bfdbfe' : '#003b5c')
+                                : (theme === 'dark' ? '#cbd5e1' : '#334155'),
                               background: hasWeight
-                                ? 'linear-gradient(180deg, rgba(14,165,233,0.18) 0%, rgba(34,211,238,0.12) 100%)'
-                                : 'rgba(241, 245, 249, 0.8)',
+                                ? theme === 'dark'
+                                  ? 'linear-gradient(180deg, rgba(14,165,233,0.25) 0%, rgba(34,211,238,0.18) 100%)'
+                                  : 'linear-gradient(180deg, rgba(14,165,233,0.18) 0%, rgba(34,211,238,0.12) 100%)'
+                                : theme === 'dark'
+                                  ? 'rgba(30, 41, 59, 0.6)'
+                                  : 'rgba(241, 245, 249, 0.8)',
                               border: hasWeight
-                                ? '1px solid rgba(14,165,233,0.35)'
-                                : '1px solid rgba(148,163,184,0.35)'
+                                ? theme === 'dark'
+                                  ? '1px solid rgba(14,165,233,0.5)'
+                                  : '1px solid rgba(14,165,233,0.35)'
+                                : theme === 'dark'
+                                  ? '1px solid rgba(148,163,184,0.3)'
+                                  : '1px solid rgba(148,163,184,0.35)'
                             }}
                             title={hasWeight ? 'Active (weight > 0)' : 'Inactive (weight = 0)'}
                           >
@@ -1074,18 +1219,25 @@ export default function Home() {
                                 width: 8,
                                 height: 8,
                                 borderRadius: 999,
-                                background: hasWeight ? '#0ea5e9' : '#94a3b8'
+                                background: hasWeight ? (theme === 'dark' ? '#60a5fa' : '#0ea5e9') : (theme === 'dark' ? '#64748b' : '#94a3b8')
                               }}
                             />
                             {formatScore(model.weight)}
                           </span>
                         </td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid rgba(226, 232, 240, 0.9)' }}>
+                        <td style={{ 
+                          padding: '12px', 
+                          borderBottom: theme === 'dark' 
+                            ? '1px solid rgba(51, 65, 85, 0.5)' 
+                            : '1px solid rgba(226, 232, 240, 0.9)' 
+                        }}>
                           <div
                             onClick={() => toggleExpand(model.uid)}
                             style={{
                               cursor: dominatorCount > 0 ? 'pointer' : 'default',
-                              color: dominatorCount > 0 ? '#0369a1' : '#64748b',
+                              color: dominatorCount > 0 
+                                ? (theme === 'dark' ? '#60a5fa' : '#0369a1')
+                                : (theme === 'dark' ? '#94a3b8' : '#64748b'),
                               fontWeight: dominatorCount > 0 ? 800 : 600,
                               userSelect: 'none'
                             }}
@@ -1103,9 +1255,13 @@ export default function Home() {
                               style={{
                                 marginTop: '10px',
                                 padding: '10px',
-                                background: 'rgba(255,255,255,0.75)',
+                                background: theme === 'dark' 
+                                  ? 'rgba(15, 23, 42, 0.8)' 
+                                  : 'rgba(255,255,255,0.75)',
                                 borderRadius: '10px',
-                                border: '1px solid rgba(148, 163, 184, 0.35)'
+                                border: theme === 'dark'
+                                  ? '1px solid rgba(148, 163, 184, 0.2)'
+                                  : '1px solid rgba(148, 163, 184, 0.35)'
                               }}
                             >
                               {model.dominance.dominators.map((dominator, dominatorIndex) => {
@@ -1120,7 +1276,9 @@ export default function Home() {
                                     style={{
                                       marginBottom: isLastDominator ? 0 : '10px',
                                       paddingBottom: isLastDominator ? 0 : '10px',
-                                      borderBottom: isLastDominator ? 'none' : '1px solid #eee'
+                                      borderBottom: isLastDominator 
+                                        ? 'none' 
+                                        : (theme === 'dark' ? '1px solid rgba(51, 65, 85, 0.5)' : '1px solid #eee')
                                     }}
                                   >
                                     <div
@@ -1137,7 +1295,7 @@ export default function Home() {
                                         style={{
                                           cursor: 'pointer',
                                           fontWeight: 'bold',
-                                          color: '#0369a1',
+                                          color: theme === 'dark' ? '#60a5fa' : '#0369a1',
                                           userSelect: 'none',
                                           display: 'flex',
                                           alignItems: 'center',
@@ -1160,7 +1318,7 @@ export default function Home() {
                                           alignItems: 'center',
                                           gap: 6,
                                           fontSize: '12px',
-                                          color: '#64748b',
+                                          color: theme === 'dark' ? '#94a3b8' : '#64748b',
                                           fontVariantNumeric: 'tabular-nums',
                                           marginRight: '4px'
                                         }}
@@ -1176,8 +1334,10 @@ export default function Home() {
                                           padding: '1px 1px',
                                           fontSize: '16px',
                                           fontWeight: 600,
-                                          color: '#0369a1',
-                                          background: 'rgba(3, 105, 161, 0.1)',
+                                          color: theme === 'dark' ? '#60a5fa' : '#0369a1',
+                                          background: theme === 'dark' 
+                                            ? 'rgba(96, 165, 250, 0.15)' 
+                                            : 'rgba(3, 105, 161, 0.1)',
                                           border: 'none',
                                           borderRadius: '4px',
                                           cursor: 'pointer',
@@ -1185,10 +1345,14 @@ export default function Home() {
                                           transition: 'all 0.2s ease'
                                         }}
                                         onMouseEnter={(e) => {
-                                          e.currentTarget.style.background = 'rgba(3, 105, 161, 0.2)';
+                                          e.currentTarget.style.background = theme === 'dark' 
+                                            ? 'rgba(96, 165, 250, 0.25)' 
+                                            : 'rgba(3, 105, 161, 0.2)';
                                         }}
                                         onMouseLeave={(e) => {
-                                          e.currentTarget.style.background = 'rgba(3, 105, 161, 0.1)';
+                                          e.currentTarget.style.background = theme === 'dark' 
+                                            ? 'rgba(96, 165, 250, 0.15)' 
+                                            : 'rgba(3, 105, 161, 0.1)';
                                         }}
                                         title={`Scroll to UID ${dominator.uid}`}
                                       >
@@ -1204,10 +1368,10 @@ export default function Home() {
                                             paddingLeft: 0,
                                             borderLeft: 'none',
                                             fontSize: 12,
-                                            color: '#0b1220',
+                                            color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
                                           }}
                                         >
-                                          <div style={{ fontWeight: 800, color: '#0f3550', marginBottom: 6 }}>
+                                          <div style={{ fontWeight: 800, color: theme === 'dark' ? '#cbd5e1' : '#0f3550', marginBottom: 6 }}>
                                             Difference score:
                                           </div>
                                           {Object.entries(dominator.margins).map(([env, margin]) => {
@@ -1219,14 +1383,14 @@ export default function Home() {
                                             return (
                                               <div key={env} style={{ marginBottom: 2 }}>
                                                 {env}:{' '}
-                                                <span style={{ fontVariantNumeric: 'tabular-nums', color: '#0b1220' }}>
+                                                <span style={{ fontVariantNumeric: 'tabular-nums', color: theme === 'dark' ? '#f1f5f9' : '#0b1220' }}>
                                                   +{formatScore(margin)}
                                                 </span>
                                                 {showDifference && (
                                                   <span
                                                     style={{
                                                       marginLeft: 6,
-                                                      color: '#16a34a',
+                                                      color: theme === 'dark' ? '#4ade80' : '#16a34a',
                                                       fontWeight: 700
                                                     }}
                                                   >
@@ -1243,12 +1407,14 @@ export default function Home() {
                                           style={{
                                             flex: 1,
                                             paddingLeft: 12,
-                                            borderLeft: '1px solid rgba(148, 163, 184, 0.25)',
+                                            borderLeft: theme === 'dark'
+                                              ? '1px solid rgba(148, 163, 184, 0.2)'
+                                              : '1px solid rgba(148, 163, 184, 0.25)',
                                             fontSize: 12,
-                                            color: '#0b1220'
+                                            color: theme === 'dark' ? '#f1f5f9' : '#0b1220'
                                           }}
                                         >
-                                          <div style={{ fontWeight: 800, color: '#0f3550', marginBottom: 6 }}>
+                                          <div style={{ fontWeight: 800, color: theme === 'dark' ? '#cbd5e1' : '#0f3550', marginBottom: 6 }}>
                                             Dominator scores
                                           </div>
                                           {scoreNames.map((env) => (
@@ -1258,17 +1424,17 @@ export default function Home() {
                                                 {formatScore(dominator.scores?.[env] ?? 0)}
                                               </span>
                                               {dominator.epsilonThresholds?.[env] !== undefined && (
-                                                <span style={{ color: '#64748b' }}>
+                                                <span style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
                                                   {' '}[{formatScore(dominator.epsilonThresholds[env] ?? 0)}]
                                                 </span>
                                               )}
                                               {dominator.sampleCounts?.[env] !== undefined && (
-                                                <span style={{ color: '#64748b' }}>
+                                                <span style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
                                                   {' '} / {dominator.sampleCounts[env]}
                                                 </span>
                                               )}
                                               {dominator.incompleteProblems?.includes(env) && (
-                                                <span style={{ marginLeft: 6, color: '#ef4444', fontWeight: 900 }}>!</span>
+                                                <span style={{ marginLeft: 6, color: theme === 'dark' ? '#f87171' : '#ef4444', fontWeight: 900 }}>!</span>
                                               )}
                                             </div>
                                           ))}
@@ -1286,7 +1452,7 @@ export default function Home() {
                             onClick={() => toggleScoreExpand(model.uid)}
                             style={{
                               cursor: 'pointer',
-                              color: '#0369a1',
+                              color: theme === 'dark' ? '#60a5fa' : '#0369a1',
                               fontWeight: 900,
                               marginBottom: '6px'
                             }}
@@ -1295,22 +1461,22 @@ export default function Home() {
                             {isScoreExpanded ? '▼' : '▶'} Avg: {formatScore(avgScore)}
                           </div>
                           {isScoreExpanded && (
-                            <div style={{ fontSize: '12px' }}>
+                            <div style={{ fontSize: '12px', color: theme === 'dark' ? '#f1f5f9' : '#0b1220' }}>
                               {scoreNames.map((env) => (
                                 <div key={env} style={{ marginBottom: '2px' }}>
                                   {env}: {formatScore(model.scores[env] || 0)}
                                   {model.epsilonThresholds[env] !== undefined && (
-                                    <span style={{ color: '#666' }}>
+                                    <span style={{ color: theme === 'dark' ? '#94a3b8' : '#666' }}>
                                       {' '}[{formatScore(model.epsilonThresholds[env])}]
                                     </span>
                                   )}
                                   {model.sampleCounts?.[env] !== undefined && (
-                                    <span style={{ color: '#64748b' }}>
+                                    <span style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
                                       {' '}/ {model.sampleCounts[env]}
                                     </span>
                                   )}
                                   {model.incompleteProblems?.includes(env) && (
-                                    <span style={{ marginLeft: 6, color: '#ef4444', fontWeight: 900 }}>!</span>
+                                    <span style={{ marginLeft: 6, color: theme === 'dark' ? '#f87171' : '#ef4444', fontWeight: 900 }}>!</span>
                                   )}
                                 </div>
                               ))}
@@ -1327,14 +1493,18 @@ export default function Home() {
                               key={env}
                               style={{ 
                                 padding: '12px', 
-                                borderBottom: '1px solid rgba(226, 232, 240, 0.9)',
-                                borderRight: '1px solid rgba(226, 232, 240, 0.9)',
+                                borderBottom: theme === 'dark' 
+                                  ? '1px solid rgba(51, 65, 85, 0.5)' 
+                                  : '1px solid rgba(226, 232, 240, 0.9)',
+                                borderRight: theme === 'dark' 
+                                  ? '1px solid rgba(51, 65, 85, 0.5)' 
+                                  : '1px solid rgba(226, 232, 240, 0.9)',
                                 textAlign: 'center'
                               }}
                             >
                               <div style={{ 
                                 fontWeight: 800, 
-                                color: '#0b1220',
+                                color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
                                 fontVariantNumeric: 'tabular-nums'
                               }}>
                                 {formatScore(envScore)}
@@ -1343,7 +1513,7 @@ export default function Home() {
                                 <div style={{ 
                                   marginTop: 4, 
                                   fontSize: 11, 
-                                  color: '#64748b',
+                                  color: theme === 'dark' ? '#94a3b8' : '#64748b',
                                   fontVariantNumeric: 'tabular-nums',
                                   lineHeight: 1.4
                                 }}>
@@ -1356,7 +1526,7 @@ export default function Home() {
                                     </span>
                                   )}
                                   {isIncomplete && (
-                                    <span style={{ marginLeft: 6, color: '#ef4444', fontWeight: 900 }}>!</span>
+                                    <span style={{ marginLeft: 6, color: theme === 'dark' ? '#f87171' : '#ef4444', fontWeight: 900 }}>!</span>
                                   )}
                                 </div>
                               )}
@@ -1371,22 +1541,24 @@ export default function Home() {
               <style jsx global>{`
                 .modern-scrollbar {
                   scrollbar-width: thin;
-                  scrollbar-color: #36a3fc #f2f6fa;
+                  scrollbar-color: ${theme === 'dark' ? '#475569 #1e293b' : '#36a3fc #f2f6fa'};
                 }
                 .modern-scrollbar::-webkit-scrollbar {
                   height: 10px;
                   width: 10px;
-                  background: #f2f6fa;
+                  background: ${theme === 'dark' ? '#1e293b' : '#f2f6fa'};
                   border-radius: 7px;
                 }
                 .modern-scrollbar::-webkit-scrollbar-thumb {
-                  background: linear-gradient(90deg,#a3d2ff,#36a3fc 80%);
+                  background: ${theme === 'dark' 
+                    ? 'linear-gradient(90deg, #475569, #64748b 80%)' 
+                    : 'linear-gradient(90deg,#a3d2ff,#36a3fc 80%)'};
                   border-radius: 7px;
                   min-height: 30px;
                   min-width: 30px;
                 }
                 .modern-scrollbar::-webkit-scrollbar-corner {
-                  background: #f2f6fa;
+                  background: ${theme === 'dark' ? '#1e293b' : '#f2f6fa'};
                 }
               `}</style>
             </div>
@@ -1427,8 +1599,18 @@ function StatsPanel({ data }: { data: RankData }) {
     });
   };
 
+  const { theme } = useTheme();
+  
   return (
-    <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '5px', fontSize: '14px' }}>
+    <div style={{ 
+      marginTop: '20px', 
+      padding: '10px', 
+      backgroundColor: theme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : '#f5f5f5', 
+      borderRadius: '5px', 
+      fontSize: '14px',
+      color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
+      border: theme === 'dark' ? '1px solid rgba(148, 163, 184, 0.2)' : 'none'
+    }}>
       <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }} onClick={() => setShowStats(s => !s)}>
         <strong>Statistics</strong>
         <span style={{ marginLeft: 8, fontSize: 17 }}>{showStats ? '▼' : '►'}</span>
