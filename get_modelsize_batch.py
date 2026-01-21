@@ -14,6 +14,12 @@ import asyncio
 import json
 import sys
 import os
+
+# Add parent directory to path so we can import affine module
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 from affine.core.setup import NETUID, logger
 from affine.utils.subtensor import get_subtensor
 

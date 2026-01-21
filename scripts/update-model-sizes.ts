@@ -136,8 +136,21 @@ async function getModelNameForUID(uid: number): Promise<string | null> {
     const result = JSON.parse(stdout);
     const commitData = result[uid];
     return commitData?.model ?? null;
-  } catch (error) {
-    console.error(`Failed to get model name for uid=${uid}:`, error);
+  } catch (error: any) {
+    // Check if we have valid stdout even if the process was killed
+    if (error.stdout && error.stdout.trim()) {
+      try {
+        const result = JSON.parse(error.stdout);
+        const commitData = result[uid];
+        if (commitData?.model) {
+          console.log(`====>  Got model name from killed process for uid=${uid}: ${commitData.model}`);
+          return commitData.model;
+        }
+      } catch (parseError) {
+        // If parsing fails, fall through to error logging
+      }
+    }
+    console.error(`Failed to get model name for uid=${uid}:`, error.message || error);
     return null;
   }
 }
@@ -153,8 +166,22 @@ async function getModelSizeForUID(uid: number): Promise<number | null> {
     const firstKey = Object.keys(result)[0];
     const resultData = result[firstKey];
     return resultData?.modelSizeGB ?? null;
-  } catch (error) {
-    console.error(`Failed to get model size for uid=${uid}:`, error);
+  } catch (error: any) {
+    // Check if we have valid stdout even if the process was killed
+    if (error.stdout && error.stdout.trim()) {
+      try {
+        const result = JSON.parse(error.stdout);
+        const firstKey = Object.keys(result)[0];
+        const resultData = result[firstKey];
+        if (resultData?.modelSizeGB !== null && resultData?.modelSizeGB !== undefined) {
+          console.log(`====>  Got model size from killed process for uid=${uid}: ${resultData.modelSizeGB} GB`);
+          return resultData.modelSizeGB;
+        }
+      } catch (parseError) {
+        // If parsing fails, fall through to error logging
+      }
+    }
+    console.error(`Failed to get model size for uid=${uid}:`, error.message || error);
     return null;
   }
 }

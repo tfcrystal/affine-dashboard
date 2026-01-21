@@ -23,8 +23,15 @@ python get_commit_info.py hotkey 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694t
 import asyncio
 import json
 import sys
+import os
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, List, Tuple
+
+# Add parent directory to path so we can import affine module
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 from affine.core.setup import NETUID, logger
 from affine.utils.subtensor import get_subtensor
 
