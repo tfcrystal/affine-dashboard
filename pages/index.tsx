@@ -859,6 +859,21 @@ export default function Home() {
                     const myRow = isMyModel(model.modelName);
                     const teamRow = isTeamModel(model.modelName);
 
+                    // Categorize dominators into current and future
+                    const isFutureDominator = (dominator: ModelData['dominance']['dominators'][0]) => {
+                      // Check if dominator has any ! sign (incomplete problems) in any environment
+                      if (!dominator.incompleteProblems || dominator.incompleteProblems.length === 0) {
+                        return false;
+                      }
+                      // Check if any environment in scoreNames has incomplete problems
+                      return scoreNames.some(env => dominator.incompleteProblems?.includes(env));
+                    };
+
+                    const currentDominators = model.dominance.dominators.filter(d => !isFutureDominator(d));
+                    const futureDominators = model.dominance.dominators.filter(d => isFutureDominator(d));
+                    const currentCount = currentDominators.length;
+                    const futureCount = futureDominators.length;
+
                     const rowBg = hasWeight
                       ? theme === 'dark'
                         ? 'linear-gradient(180deg, rgba(14, 165, 233, 0.15) 0%, rgba(34, 211, 238, 0.10) 100%)'
@@ -1244,7 +1259,7 @@ export default function Home() {
                           >
                             {dominatorCount > 0 ? (
                               <>
-                                {isExpanded ? '▼' : '▶'} {dominatorCount} dominator{dominatorCount !== 1 ? 's' : ''}
+                                {isExpanded ? '▼' : '▶'} {dominatorCount} ({currentCount}/{futureCount}) dominator{dominatorCount !== 1 ? 's' : ''}
                               </>
                             ) : (
                               '0 dominators'
@@ -1264,19 +1279,30 @@ export default function Home() {
                                   : '1px solid rgba(148, 163, 184, 0.35)'
                               }}
                             >
-                              {model.dominance.dominators.map((dominator, dominatorIndex) => {
+                              {/* Current Dominators */}
+                              {currentCount > 0 && (
+                                <>
+                                  <div style={{ 
+                                    fontWeight: 800, 
+                                    color: theme === 'dark' ? '#cbd5e1' : '#0f3550', 
+                                    marginBottom: '10px',
+                                    fontSize: '14px'
+                                  }}>
+                                    Current Dominators:
+                                  </div>
+                                  {currentDominators.map((dominator, dominatorIndex) => {
                                 const dominatorKey = `${model.uid}-${dominator.uid}`;
                                 const isDominatorExpanded = expandedDominators.has(dominatorKey);
-                                const isLastDominator = dominatorIndex === model.dominance.dominators.length - 1;
+                                const isLastCurrentDominator = dominatorIndex === currentDominators.length - 1;
                                 const dominatorModel = data?.models.find(m => m.uid === dominator.uid);
                                 const dominatorAge = dominatorModel ? formatAgeDays(dominatorModel.firstBlk) : '-';
                                 return (
                                   <div
                                     key={dominator.uid}
                                     style={{
-                                      marginBottom: isLastDominator ? 0 : '10px',
-                                      paddingBottom: isLastDominator ? 0 : '10px',
-                                      borderBottom: isLastDominator 
+                                      marginBottom: isLastCurrentDominator ? 0 : '10px',
+                                      paddingBottom: isLastCurrentDominator ? 0 : '10px',
+                                      borderBottom: isLastCurrentDominator 
                                         ? 'none' 
                                         : (theme === 'dark' ? '1px solid rgba(51, 65, 85, 0.5)' : '1px solid #eee')
                                     }}
@@ -1458,7 +1484,231 @@ export default function Home() {
                                     )}
                                   </div>
                                 );
-                              })}
+                                  })}
+                                  {/* Grey line separator */}
+                                  {futureCount > 0 && (
+                                    <div
+                                      style={{
+                                        marginTop: '15px',
+                                        marginBottom: '15px',
+                                        borderBottom: theme === 'dark'
+                                          ? '1px solid rgba(148, 163, 184, 0.3)'
+                                          : '1px solid rgba(148, 163, 184, 0.5)',
+                                        width: '100%'
+                                      }}
+                                    />
+                                  )}
+                                </>
+                              )}
+                              {/* Future Dominators */}
+                              {futureCount > 0 && (
+                                <>
+                                  <div style={{ 
+                                    fontWeight: 800, 
+                                    color: theme === 'dark' ? '#cbd5e1' : '#0f3550', 
+                                    marginBottom: '10px',
+                                    marginTop: currentCount > 0 ? '0' : '0',
+                                    fontSize: '14px'
+                                  }}>
+                                    Future Dominators:
+                                  </div>
+                                  {futureDominators.map((dominator, dominatorIndex) => {
+                                    const dominatorKey = `${model.uid}-${dominator.uid}`;
+                                    const isDominatorExpanded = expandedDominators.has(dominatorKey);
+                                    const isLastFutureDominator = dominatorIndex === futureDominators.length - 1;
+                                    const dominatorModel = data?.models.find(m => m.uid === dominator.uid);
+                                    const dominatorAge = dominatorModel ? formatAgeDays(dominatorModel.firstBlk) : '-';
+                                    return (
+                                      <div
+                                        key={dominator.uid}
+                                        style={{
+                                          marginBottom: isLastFutureDominator ? 0 : '10px',
+                                          paddingBottom: isLastFutureDominator ? 0 : '10px',
+                                          borderBottom: isLastFutureDominator 
+                                            ? 'none' 
+                                            : (theme === 'dark' ? '1px solid rgba(51, 65, 85, 0.5)' : '1px solid #eee')
+                                        }}
+                                      >
+                                        <div
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'start',
+                                            justifyContent: 'space-around',
+                                            gap: 1,
+                                            marginBottom: '1px'
+                                          }}
+                                        >
+                                          <div
+                                            onClick={() => toggleDominatorExpand(model.uid, dominator.uid)}
+                                            style={{
+                                              cursor: 'pointer',
+                                              fontWeight: 'bold',
+                                              color: theme === 'dark' ? '#60a5fa' : '#0369a1',
+                                              userSelect: 'none',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: 6,
+                                              flex: 1
+                                            }}
+                                            onMouseEnter={(e) => {
+                                              e.currentTarget.style.textDecoration = 'underline';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.currentTarget.style.textDecoration = 'none';
+                                            }}
+                                          >
+                                            <span>{isDominatorExpanded ? '▼' : '▶'}</span>
+                                            <span>UID {dominator.uid}: {dominator.modelName}</span>
+                                          </div>
+                                          <div
+                                            style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: 6,
+                                              fontSize: '12px',
+                                              color: theme === 'dark' ? '#94a3b8' : '#64748b',
+                                              fontVariantNumeric: 'tabular-nums',
+                                              marginRight: '4px'
+                                            }}
+                                          >
+                                            {dominatorAge}
+                                          </div>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              // Unclick group models or team models buttons if they are clicked
+                                              const needsUnclick = onlyShowGroupModels || onlyShowTeamModels;
+                                              if (onlyShowGroupModels) {
+                                                setOnlyShowGroupModels(false);
+                                              }
+                                              if (onlyShowTeamModels) {
+                                                setOnlyShowTeamModels(false);
+                                              }
+                                              // Then scroll to uid - delay if we unclicked filters to allow re-render
+                                              if (needsUnclick) {
+                                                setTimeout(() => {
+                                                  scrollToUid(dominator.uid);
+                                                }, 100);
+                                              } else {
+                                                scrollToUid(dominator.uid);
+                                              }
+                                            }}
+                                            style={{
+                                              padding: '1px 1px',
+                                              fontSize: '16px',
+                                              fontWeight: 600,
+                                              color: theme === 'dark' ? '#60a5fa' : '#0369a1',
+                                              background: theme === 'dark' 
+                                                ? 'rgba(96, 165, 250, 0.15)' 
+                                                : 'rgba(3, 105, 161, 0.1)',
+                                              border: 'none',
+                                              borderRadius: '4px',
+                                              cursor: 'pointer',
+                                              whiteSpace: 'nowrap',
+                                              transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                              e.currentTarget.style.background = theme === 'dark' 
+                                                ? 'rgba(96, 165, 250, 0.25)' 
+                                                : 'rgba(3, 105, 161, 0.2)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.currentTarget.style.background = theme === 'dark' 
+                                                ? 'rgba(96, 165, 250, 0.15)' 
+                                                : 'rgba(3, 105, 161, 0.1)';
+                                            }}
+                                            title={`Scroll to UID ${dominator.uid}`}
+                                          >
+                                            🏃‍♂️‍➡️
+                                          </button>
+                                        </div>
+                                        {isDominatorExpanded && (
+                                          <div style={{ display: 'flex', gap: 14, marginTop: '10px' }}>
+                                            {/* Left: margins - styled like the right "dominator's own scores" panel */}
+                                            <div
+                                              style={{
+                                                minWidth: 260,
+                                                paddingLeft: 0,
+                                                borderLeft: 'none',
+                                                fontSize: 12,
+                                                color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
+                                              }}
+                                            >
+                                              <div style={{ fontWeight: 800, color: theme === 'dark' ? '#cbd5e1' : '#0f3550', marginBottom: 6 }}>
+                                                Difference score:
+                                              </div>
+                                              {Object.entries(dominator.margins).map(([env, margin]) => {
+                                                const dominatorScore = dominator.scores?.[env] ?? 0;
+                                                const targetEpsilon = model.epsilonThresholds[env] ?? 0;
+                                                const difference = dominatorScore - targetEpsilon;
+                                                const showDifference = difference >= 0 && Number.isFinite(difference);
+
+                                                return (
+                                                  <div key={env} style={{ marginBottom: 2 }}>
+                                                    {env}:{' '}
+                                                    <span style={{ fontVariantNumeric: 'tabular-nums', color: theme === 'dark' ? '#f1f5f9' : '#0b1220' }}>
+                                                      +{formatScore(margin)}
+                                                    </span>
+                                                    {showDifference && (
+                                                      <span
+                                                        style={{
+                                                          marginLeft: 6,
+                                                          color: theme === 'dark' ? '#4ade80' : '#16a34a',
+                                                          fontWeight: 700
+                                                        }}
+                                                      >
+                                                        (+{formatScore(difference)})
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+
+                                            {/* Right: dominator's own scores (full info) */}
+                                            <div
+                                              style={{
+                                                flex: 1,
+                                                paddingLeft: 12,
+                                                borderLeft: theme === 'dark'
+                                                  ? '1px solid rgba(148, 163, 184, 0.2)'
+                                                  : '1px solid rgba(148, 163, 184, 0.25)',
+                                                fontSize: 12,
+                                                color: theme === 'dark' ? '#f1f5f9' : '#0b1220'
+                                              }}
+                                            >
+                                              <div style={{ fontWeight: 800, color: theme === 'dark' ? '#cbd5e1' : '#0f3550', marginBottom: 6 }}>
+                                                Dominator scores
+                                              </div>
+                                              {scoreNames.map((env) => (
+                                                <div key={env} style={{ marginBottom: 2 }}>
+                                                  {env}:{' '}
+                                                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                    {formatScore(dominator.scores?.[env] ?? 0)}
+                                                  </span>
+                                                  {dominator.epsilonThresholds?.[env] !== undefined && (
+                                                    <span style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
+                                                      {' '}[{formatScore(dominator.epsilonThresholds[env] ?? 0)}]
+                                                    </span>
+                                                  )}
+                                                  {dominator.sampleCounts?.[env] !== undefined && (
+                                                    <span style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
+                                                      {' '} / {dominator.sampleCounts[env]}
+                                                    </span>
+                                                  )}
+                                                  {dominator.incompleteProblems?.includes(env) && (
+                                                    <span style={{ marginLeft: 6, color: theme === 'dark' ? '#f87171' : '#ef4444', fontWeight: 900 }}>!</span>
+                                                  )}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </>
+                              )}
                             </div>
                           )}
                         </td>
