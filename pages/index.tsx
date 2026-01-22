@@ -1328,7 +1328,22 @@ export default function Home() {
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          scrollToUid(dominator.uid);
+                                          // Unclick group models or team models buttons if they are clicked
+                                          const needsUnclick = onlyShowGroupModels || onlyShowTeamModels;
+                                          if (onlyShowGroupModels) {
+                                            setOnlyShowGroupModels(false);
+                                          }
+                                          if (onlyShowTeamModels) {
+                                            setOnlyShowTeamModels(false);
+                                          }
+                                          // Then scroll to uid - delay if we unclicked filters to allow re-render
+                                          if (needsUnclick) {
+                                            setTimeout(() => {
+                                              scrollToUid(dominator.uid);
+                                            }, 100);
+                                          } else {
+                                            scrollToUid(dominator.uid);
+                                          }
                                         }}
                                         style={{
                                           padding: '1px 1px',
