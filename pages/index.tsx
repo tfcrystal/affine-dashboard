@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
-import { ClipboardIcon, EyeIcon, EyeSlashIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { ClipboardIcon, EyeIcon, EyeSlashIcon, SunIcon, MoonIcon, UserGroupIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '../utils/theme';
 
 interface ModelData {
@@ -556,76 +556,94 @@ export default function Home() {
             <MoonIcon width={24} height={24} />
           )}
         </button>
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ textAlign: 'center', width: '100%' }}>
-              {/* ... unchanged UI controls ... */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  gap: '24px',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginTop: 12,
-                  fontSize: 13,
-                  color: theme === 'dark' ? '#94a3b8' : '#3b556a',
-                  width: '100%',
-                }}
-              >
-                {/* ... unchanged filter controls ... */}
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
-                    userSelect: 'none',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={onlyShowGroupModels}
-                    onChange={(e) => setOnlyShowGroupModels(e.target.checked)}
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      cursor: 'pointer',
-                      accentColor: theme === 'dark' ? '#60a5fa' : '#0ea5e9',
-                    }}
-                  />
-                  <span>Group models</span>
-                </label>
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    color: theme === 'dark' ? '#f1f5f9' : '#0b1220',
-                    userSelect: 'none',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={onlyShowTeamModels}
-                    onChange={(e) => setOnlyShowTeamModels(e.target.checked)}
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      cursor: 'pointer',
-                      accentColor: theme === 'dark' ? '#cbd05f' : '#adb05f',
-                    }}
-                  />
-                  <span>Team models</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Group Models Toggle Button */}
+        <button
+          onClick={() => setOnlyShowGroupModels(!onlyShowGroupModels)}
+          style={{
+            position: 'fixed',
+            top: '72px',
+            right: '20px',
+            zIndex: 1000,
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            border: theme === 'dark' ? '1px solid rgba(148, 163, 184, 0.3)' : '1px solid rgba(148, 163, 184, 0.2)',
+            background: onlyShowGroupModels
+              ? (theme === 'dark' ? 'rgba(203, 208, 95, 0.3)' : 'rgba(173, 176, 95, 0.2)')
+              : (theme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.9)'),
+            backdropFilter: 'blur(10px)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: theme === 'dark'
+              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+              : '0 4px 12px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s ease',
+            color: onlyShowGroupModels
+              ? (theme === 'dark' ? '#60a5fa' : '#0ea5e9')
+              : (theme === 'dark' ? '#94a3b8' : '#64748b')
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.background = onlyShowGroupModels
+              ? (theme === 'dark' ? 'rgba(14, 165, 233, 0.4)' : 'rgba(14, 165, 233, 0.3)')
+              : (theme === 'dark' ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 1)');
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.background = onlyShowGroupModels
+              ? (theme === 'dark' ? 'rgba(14, 165, 233, 0.3)' : 'rgba(14, 165, 233, 0.2)')
+              : (theme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.9)');
+          }}
+          title={onlyShowGroupModels ? 'Show all models' : 'Show only group models'}
+        >
+          <UserGroupIcon width={24} height={24} style={{ color: onlyShowGroupModels ? '#60a5fa' : '#94a3b8' }} />
+        </button>
+        {/* Team Models Toggle Button */}
+        <button
+          onClick={() => setOnlyShowTeamModels(!onlyShowTeamModels)}
+          style={{
+            position: 'fixed',
+            top: '124px',
+            right: '20px',
+            zIndex: 1000,
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            border: theme === 'dark' ? '1px solid rgba(148, 163, 184, 0.3)' : '1px solid rgba(148, 163, 184, 0.2)',
+            background: onlyShowTeamModels
+              ? (theme === 'dark' ? 'rgba(203, 208, 95, 0.3)' : 'rgba(173, 176, 95, 0.2)')
+              : (theme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.9)'),
+            backdropFilter: 'blur(10px)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: theme === 'dark'
+              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+              : '0 4px 12px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s ease',
+            color: onlyShowTeamModels
+              ? (theme === 'dark' ? '#cbd05f' : '#adb05f')
+              : (theme === 'dark' ? '#94a3b8' : '#64748b')
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.background = onlyShowTeamModels
+              ? (theme === 'dark' ? 'rgba(203, 208, 95, 0.4)' : 'rgba(173, 176, 95, 0.3)')
+              : (theme === 'dark' ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 1)');
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.background = onlyShowTeamModels
+              ? (theme === 'dark' ? 'rgba(203, 208, 95, 0.3)' : 'rgba(173, 176, 95, 0.2)')
+              : (theme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.9)');
+          }}
+          title={onlyShowTeamModels ? 'Show all models' : 'Show only team models'}
+        >
+          <BuildingOfficeIcon width={24} height={24} style={{ color: onlyShowTeamModels ? '#cbd05f' : '#94a3b8' }} />
+        </button>
 
         {/* ... error and info UI unchanged ... */}
 
