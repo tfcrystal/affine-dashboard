@@ -76,6 +76,8 @@ export default function Home() {
   const [fetchingSizes, setFetchingSizes] = useState<Set<number>>(new Set());
   const [minerStatuses, setMinerStatuses] = useState<{ [uid: number]: string | null }>({});
   const [fetchingStatuses, setFetchingStatuses] = useState<Set<number>>(new Set());
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningAnimating, setWarningAnimating] = useState<'slideDown' | 'slideUp' | null>(null);
 
   const fetchData = async (forceRefresh = false) => {
     if (forceRefresh) {
@@ -103,6 +105,39 @@ export default function Home() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (data?.error) {
+      // Show warning (initially hidden at top)
+      setShowWarning(true);
+      setWarningAnimating(null);
+      
+      // Small delay to ensure initial state is rendered, then start slide down
+      const slideDownTimer = setTimeout(() => {
+        setWarningAnimating('slideDown');
+      }, 10);
+      
+      // After 3 seconds, start slide up animation
+      const slideUpTimer = setTimeout(() => {
+        setWarningAnimating('slideUp');
+        
+        // After 0.5 seconds, hide the warning
+        setTimeout(() => {
+          setShowWarning(false);
+          setWarningAnimating(null);
+        }, 500);
+      }, 3010); // 10ms initial delay + 3000ms display time
+      
+      return () => {
+        clearTimeout(slideDownTimer);
+        clearTimeout(slideUpTimer);
+      };
+    } else {
+      // Reset warning state when error is cleared
+      setShowWarning(false);
+      setWarningAnimating(null);
+    }
+  }, [data?.error]);
 
   useEffect(() => {
     if (!data || !data.models) return;
@@ -659,16 +694,27 @@ export default function Home() {
           </div>
         )}
 
-        {data?.error && (
-          <div style={{ 
-            padding: '10px', 
-            backgroundColor: theme === 'dark' ? 'rgba(234, 179, 8, 0.2)' : '#ffe', 
-            color: theme === 'dark' ? '#fde047' : '#cc0', 
-            borderRadius: '5px', 
-            marginBottom: '20px' 
-          }}>
-            Warning: {data.error}
-          </div>
+        {showWarning && data?.error && (
+          <>
+            <div 
+              style={{ 
+                padding: '10px', 
+                backgroundColor: theme === 'dark' ? 'rgba(234, 179, 8, 0.2)' : '#ffe', 
+                color: theme === 'dark' ? '#fde047' : '#cc0', 
+                borderRadius: '5px', 
+                marginBottom: '20px',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 2000,
+                transform: warningAnimating === 'slideDown' ? 'translateY(0)' : warningAnimating === 'slideUp' ? 'translateY(-100%)' : 'translateY(-100%)',
+                transition: warningAnimating === 'slideDown' ? 'transform 0.3s ease-out' : warningAnimating === 'slideUp' ? 'transform 0.5s ease-in' : 'none'
+              }}
+            >
+              Warning: {data.error}
+            </div>
+          </>
         )}
 
         {loading && !data && (
